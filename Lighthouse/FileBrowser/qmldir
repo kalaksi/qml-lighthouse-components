@@ -1,0 +1,3 @@
+module Lighthouse.FileBrowser
+FileBrowser 1.0 FileBrowser.qml
+

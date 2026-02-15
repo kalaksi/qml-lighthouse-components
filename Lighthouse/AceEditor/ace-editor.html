@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ace Editor</title>
+    <style type="text/css" media="screen">
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+        }
+        #editor {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: transparent;
+        }
+    </style>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+    <div id="editor"></div>
+    <script src="ace-builds/src-min-noconflict/ace.js"></script>
+    <script>
+        var editor = null;
+        var bridge = null;
+
+        function initializeAce() {
+            if (typeof ace === 'undefined') {
+                console.error('ace is not available');
+                return;
+            }
+
+            if (window.editor) {
+                console.error('Ace editor already initialized');
+                return;
+            }
+
+            ace.config.set('basePath', 'ace-builds/src-min-noconflict');
+
+            window.editor = ace.edit('editor');
+
+            // Setup WebChannel
+            new QWebChannel(qt.webChannelTransport, function(channel) {
+                window.bridge = channel.objects.bridge;
+
+                window.editor.session.on('change', function() {
+                    window.bridge.contentChanged(window.editor.getValue());
+                });
+
+                window.bridge.editorReady();
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAce);
+        } else {
+            initializeAce();
+        }
+    </script>
+</body>
+</html>

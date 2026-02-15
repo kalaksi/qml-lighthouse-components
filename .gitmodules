@@ -1,0 +1,3 @@
+[submodule "Lighthouse/AceEditor/ace-builds"]
+	path = Lighthouse/AceEditor/ace-builds
+	url = https://github.com/ajaxorg/ace-builds.git
