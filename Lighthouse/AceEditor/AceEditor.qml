@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 kalaksi@users.noreply.github.com
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
 import QtQuick
 import QtQuick.Controls
 import QtWebEngine
