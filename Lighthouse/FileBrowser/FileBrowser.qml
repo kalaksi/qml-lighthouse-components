@@ -21,6 +21,7 @@ Item {
     property var columnHeaders: ["Column 1", "Column 2"]
     property var columnWidths: [0.6, 0.4]
     property color headerColor: palette.alternateBase
+    property color headerBorderColor: palette.mid
     property bool useSplitView: false
     readonly property string selectedDirectory: dirTreeView && dirTreeView.selectedPaths.length > 0 ?
         dirTreeView.selectedPaths[0] : "/"
@@ -59,13 +60,12 @@ Item {
         FileBrowserHeader {
             id: header
             width: parent.width
+            syncView: treeView.tableView
             rowHeight: root.rowHeight
-            arrowWidth: root.arrowWidth
             columnHeaders: root.columnHeaders
             headerColor: root.headerColor
-            columnWidthProvider: function(column, totalWidth) {
-                return root._getColumnWidth(column, totalWidth, false)
-            }
+            headerBorderColor: root.headerBorderColor
+            _maxColumns: root._maxColumns
         }
 
         FileBrowserTreeView {
@@ -75,7 +75,6 @@ Item {
             indentWidth: root.indentWidth
             rowHeight: root.rowHeight
             arrowWidth: root.arrowWidth
-            headerColor: root.headerColor
             _cache: root._cache
             _expandedDirs: root._expandedDirs
             _maxColumns: root._maxColumns
@@ -101,35 +100,43 @@ Item {
         orientation: Qt.Horizontal
         visible: root.useSplitView
 
-        FileBrowserTreeView {
-            id: dirTreeView
-            indentWidth: root.indentWidth
-            rowHeight: root.rowHeight
-            arrowWidth: root.arrowWidth
-            headerColor: root.headerColor
-            _cache: root._cache
-            _expandedDirs: root._expandedDirs
-            _maxColumns: root._maxColumns
-            rootPath: "/"
-            hideFiles: true
-            singleSelection: true
-            columnWidthProvider: function(column, totalWidth) {
-                return root._getColumnWidth(column, totalWidth, true)
-            }
-
+        Column {
             SplitView.preferredWidth: parent.width * 0.25
             SplitView.minimumWidth: 100
 
-            onDirectoryExpanded: function(path, isCached) {
-                root.directoryExpanded(path, isCached)
+            Item {
+                width: parent.width
+                height: root.rowHeight
             }
 
-            onSelectionChanged: function(_paths) {
-                fileListView.refreshView()
-            }
+            FileBrowserTreeView {
+                id: dirTreeView
+                width: parent.width
+                height: parent.height - root.rowHeight
+                indentWidth: root.indentWidth
+                rowHeight: root.rowHeight
+                arrowWidth: root.arrowWidth
+                _cache: root._cache
+                _expandedDirs: root._expandedDirs
+                _maxColumns: root._maxColumns
+                rootPath: "/"
+                hideFiles: true
+                singleSelection: true
+                columnWidthProvider: function(column, totalWidth) {
+                    return root._getColumnWidth(column, totalWidth, true)
+                }
 
-            Component.onCompleted: {
-                root._currentDirectoryTreeView = dirTreeView
+                onDirectoryExpanded: function(path, isCached) {
+                    root.directoryExpanded(path, isCached)
+                }
+
+                onSelectionChanged: function(_paths) {
+                    fileListView.refreshView()
+                }
+
+                Component.onCompleted: {
+                    root._currentDirectoryTreeView = dirTreeView
+                }
             }
         }
 
@@ -139,13 +146,12 @@ Item {
             FileBrowserHeader {
                 id: fileHeader
                 width: parent.width
+                syncView: fileListView.tableView
                 rowHeight: root.rowHeight
-                arrowWidth: root.arrowWidth
                 columnHeaders: root.columnHeaders
                 headerColor: root.headerColor
-                columnWidthProvider: function(column, totalWidth) {
-                    return root._getColumnWidth(column, totalWidth, false)
-                }
+                headerBorderColor: root.headerBorderColor
+                _maxColumns: root._maxColumns
             }
 
             FileBrowserTreeView {
@@ -155,16 +161,12 @@ Item {
                 indentWidth: root.indentWidth
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
-                headerColor: root.headerColor
                 _cache: root._cache
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
                 rootPath: root.selectedDirectory
                 hideDirectories: true
                 enableDirectoryNavigation: false
-                columnWidthProvider: function(column, totalWidth) {
-                    return root._getColumnWidth(column, totalWidth, false)
-                }
 
                 onDirectoryExpanded: function(path, isCached) {
                     root.directoryExpanded(path, isCached)
@@ -172,6 +174,14 @@ Item {
 
                 Component.onCompleted: {
                     root._currentFileListView = fileListView
+                    Qt.callLater(function() {
+                        let tw = fileListView.tableView.width
+                        for (let c = 0; c < 1 + root._maxColumns; c++) {
+                            let width = root._getColumnWidth(c, tw, false)
+                            fileListView.tableView.setColumnWidth(c, width)
+                        }
+                        fileListView.tableView.forceLayout()
+                    })
                 }
             }
         }
@@ -281,18 +291,12 @@ Item {
             }
             return tableViewWidth * 0.4
         }
-        else if (column === 1) {
-            return 0
-        }
-        else if (column === 2) {
-            return 0
-        }
         else {
             if (hideColumns) {
                 return 0
             }
 
-            let columnIndex = column - 3
+            let columnIndex = column - 1
             if (columnIndex < 0 || columnIndex >= root.columnHeaders.length) {
                 return 0
             }

@@ -12,12 +12,11 @@ import QtQml.Models
 Item {
     id: root
 
-    required property var columnWidthProvider
+    property var columnWidthProvider: null
 
     property int indentWidth: 20
     property int rowHeight: 28
     property int arrowWidth: 20
-    property color headerColor: palette.alternateBase
     property string rootPath: "/"
     property bool hideFiles: false
     property bool hideDirectories: false
@@ -34,6 +33,8 @@ Item {
     signal directoryExpanded(string path, bool is_cached)
     signal selectionChanged(var paths)
 
+    property alias tableView: tableView
+
     onRootPathChanged: refreshView()
 
     TableView {
@@ -42,7 +43,9 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         onWidthChanged: forceLayout()
-        columnWidthProvider: (column) => root.columnWidthProvider(column, tableView.width)
+        columnWidthProvider: root.columnWidthProvider
+            ? (column) => root.columnWidthProvider(column, tableView.width)
+            : undefined
         rowHeightProvider: function(row) {
             return root.rowHeight
         }
@@ -54,8 +57,6 @@ Item {
             id: tableModel
 
             TableModelColumn { display: "name" }
-            TableModelColumn { display: "fullPath" }
-            TableModelColumn { display: "fileType" }
             TableModelColumn { display: "column-0" }
             TableModelColumn { display: "column-1" }
             TableModelColumn { display: "column-2" }
@@ -111,12 +112,12 @@ Item {
                 return ""
             }
             property string columnValue: {
-                if (viewDelegate.column <= 2 || viewDelegate.row < 0 || viewDelegate.row >= tableModel.rowCount ||
+                if (viewDelegate.column <= 0 || viewDelegate.row < 0 || viewDelegate.row >= tableModel.rowCount ||
                     !tableModel.rows) {
                     return ""
                 }
                 let rowData = tableModel.rows[viewDelegate.row]
-                let key = "column-" + (viewDelegate.column - 3)
+                let key = "column-" + (viewDelegate.column - 1)
                 return rowData && rowData[key] !== undefined ? String(rowData[key]) : ""
             }
 
@@ -225,7 +226,7 @@ Item {
                 }
 
                 Label {
-                    visible: viewDelegate.column > 2
+                    visible: viewDelegate.column > 0
                     anchors.fill: parent
                     text: viewDelegate.columnValue
                     elide: Text.ElideRight

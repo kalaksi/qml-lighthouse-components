@@ -7,43 +7,71 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
-Rectangle {
+Item {
     id: root
-    height: rowHeight
-    color: headerColor
+    height: headerView.height
 
-    required property var columnWidthProvider
-
-    property int rowHeight: 28
-    property int arrowWidth: 20
+    required property var syncView
     property var columnHeaders: ["Column 1", "Column 2"]
-    property color headerColor: palette.alternateBase
+    property int rowHeight: 28
+    property color headerColor: "transparent"
+    property color headerBorderColor: palette.mid
+    property int _maxColumns: 8
+    property var _headerModel: root._buildHeaderModel()
 
-    Row {
-        anchors.fill: parent
-        anchors.leftMargin: root.arrowWidth
+    HorizontalHeaderView {
+        id: headerView
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: root.rowHeight
+        syncView: root.syncView
+        model: root._headerModel
+        rowHeightProvider: function(row) { return root.rowHeight }
+        delegate: Rectangle {
+            id: cellRoot
+            required property int row
+            color: root.headerColor
 
-        Label {
-            width: root.columnWidthProvider(0, root.width) - root.arrowWidth
-            text: "Name"
-            font: palette.buttonText
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-        }
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 1
+                color: root.headerBorderColor
+            }
 
-        Repeater {
-            model: root.columnHeaders.length
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: root.headerBorderColor
+            }
 
             Label {
-                required property int index
-
-                width: root.columnWidthProvider(index + 3, root.width)
-                text: root.columnHeaders[index]
-                font: palette.buttonText
+                anchors.fill: parent
+                anchors.leftMargin: 6
+                anchors.rightMargin: 1
+                text: (cellRoot.row >= 0 && cellRoot.row < root._headerModel.length
+                    && root._headerModel[cellRoot.row].display !== undefined)
+                    ? root._headerModel[cellRoot.row].display
+                    : ""
+                color: palette.buttonText
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
             }
         }
     }
-}
 
+    function _buildHeaderModel() {
+        var a = [{ display: "Name" }]
+        for (let i = 0; i < columnHeaders.length; i++) {
+            a.push({ display: columnHeaders[i] })
+        }
+        while (a.length < 1 + _maxColumns) {
+            a.push({ display: "" })
+        }
+        return a
+    }
+}
