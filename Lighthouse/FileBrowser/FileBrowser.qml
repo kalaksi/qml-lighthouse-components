@@ -199,6 +199,8 @@ Item {
             return
         }
 
+        let wasCached = normalizedPath in root._cache
+
         root._expandedDirs[normalizedPath] = true
 
         if (fileEntries !== undefined && fileEntries !== null) {
@@ -211,12 +213,22 @@ Item {
             return
         }
 
-        if (root.useSplitView && root._currentDirectoryTreeView) {
-            root._currentDirectoryTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
-            root._currentFileListView.refreshView()
+        if (wasCached) {
+            if (root.useSplitView && root._currentFileListView) {
+                root._currentFileListView.refreshView()
+            }
+            else if (root._currentTreeView) {
+                root._currentTreeView.refreshView()
+            }
         }
-        else if (root._currentTreeView) {
-            root._currentTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
+        else {
+            if (root.useSplitView && root._currentDirectoryTreeView) {
+                root._currentDirectoryTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
+                root._currentFileListView.refreshView()
+            }
+            else if (root._currentTreeView) {
+                root._currentTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
+            }
         }
     }
 
