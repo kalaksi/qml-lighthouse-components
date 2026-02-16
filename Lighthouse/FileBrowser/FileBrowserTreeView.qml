@@ -28,6 +28,7 @@ Item {
     property var _cache: ({})
     property var _expandedDirs: ({})
     property int _maxColumns: 8
+    // For multi-selection.
     property int _anchorRow: -1
 
     signal directoryExpanded(string path, bool is_cached)
@@ -144,40 +145,46 @@ Item {
                                 ItemSelectionModel.ClearAndSelect | ItemSelectionModel.Current |
                                     ItemSelectionModel.Rows
                             )
-                            return
-                        }
-                        if (mouse.modifiers & Qt.ShiftModifier) {
-                            let anchor = root._anchorRow >= 0 ? root._anchorRow : viewDelegate.row
-                            let top = Math.min(anchor, viewDelegate.row)
-                            let bottom = Math.max(anchor, viewDelegate.row)
-                            tableView.selectionModel.clearSelection()
-                            for (let r = top; r <= bottom; r++) {
-                                tableView.selectionModel.select(
-                                    tableView.model.index(r, 0),
-                                    ItemSelectionModel.Select | ItemSelectionModel.Rows
-                                )
-                            }
-                            tableView.selectionModel.setCurrentIndex(
-                                rowIndex, ItemSelectionModel.Current
-                            )
-                        }
-                        else if (mouse.modifiers & Qt.ControlModifier) {
-                            tableView.selectionModel.select(
-                                rowIndex,
-                                ItemSelectionModel.Toggle | ItemSelectionModel.Rows
-                            )
-                            tableView.selectionModel.setCurrentIndex(
-                                rowIndex, ItemSelectionModel.Current
-                            )
-                            root._anchorRow = viewDelegate.row
                         }
                         else {
-                            tableView.selectionModel.select(
-                                rowIndex,
-                                ItemSelectionModel.ClearAndSelect | ItemSelectionModel.Current |
-                                    ItemSelectionModel.Rows
-                            )
-                            root._anchorRow = viewDelegate.row
+                            if (mouse.modifiers & Qt.ShiftModifier) {
+                                let anchor = root._anchorRow >= 0 ? root._anchorRow : viewDelegate.row
+                                let top = Math.min(anchor, viewDelegate.row)
+                                let bottom = Math.max(anchor, viewDelegate.row)
+                                tableView.selectionModel.clearSelection()
+                                for (let r = top; r <= bottom; r++) {
+                                    tableView.selectionModel.select(
+                                        tableView.model.index(r, 0),
+                                        ItemSelectionModel.Select | ItemSelectionModel.Rows
+                                    )
+                                }
+                                tableView.selectionModel.setCurrentIndex(
+                                    rowIndex, ItemSelectionModel.Current
+                                )
+                            }
+                            else if (mouse.modifiers & Qt.ControlModifier) {
+                                tableView.selectionModel.select(
+                                    rowIndex,
+                                    ItemSelectionModel.Toggle | ItemSelectionModel.Rows
+                                )
+                                tableView.selectionModel.setCurrentIndex(
+                                    rowIndex, ItemSelectionModel.Current
+                                )
+                                root._anchorRow = viewDelegate.row
+                            }
+                            else {
+                                if (viewDelegate.selected && tableView.selectionModel.selectedRows(0).length === 1) {
+                                    tableView.selectionModel.clearSelection()
+                                }
+                                else {
+                                    tableView.selectionModel.select(
+                                        rowIndex,
+                                        ItemSelectionModel.ClearAndSelect | ItemSelectionModel.Current |
+                                            ItemSelectionModel.Rows
+                                    )
+                                    root._anchorRow = viewDelegate.row
+                                }
+                            }
                         }
                     }
                 }
