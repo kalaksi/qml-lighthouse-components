@@ -35,6 +35,7 @@ Item {
     signal selectionChanged(var paths)
 
     property alias tableView: tableView
+    property Menu contextMenu: null
 
     onRootPathChanged: refreshView()
 
@@ -137,7 +138,12 @@ Item {
                 // so have to implement selection manually.
                 MouseArea {
                     anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onClicked: function(mouse) {
+                        if (mouse.button === Qt.RightButton) {
+                            if (root.contextMenu) root.contextMenu.popup()
+                            return
+                        }
                         let rowIndex = tableView.model.index(viewDelegate.row, 0)
                         if (root.singleSelection) {
                             tableView.selectionModel.select(

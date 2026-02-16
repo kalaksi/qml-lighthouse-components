@@ -29,6 +29,7 @@ Item {
         fileListView.selectedPaths : []
 
     property int _maxColumns: 8
+    property Menu contextMenu: null
     property var _cache: ({})
     property var _expandedDirs: ({})
     property var _currentTreeView: null
@@ -75,6 +76,7 @@ Item {
             indentWidth: root.indentWidth
             rowHeight: root.rowHeight
             arrowWidth: root.arrowWidth
+            contextMenu: root.contextMenu
             _cache: root._cache
             _expandedDirs: root._expandedDirs
             _maxColumns: root._maxColumns
@@ -161,6 +163,7 @@ Item {
                 indentWidth: root.indentWidth
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
+                contextMenu: root.contextMenu
                 _cache: root._cache
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
