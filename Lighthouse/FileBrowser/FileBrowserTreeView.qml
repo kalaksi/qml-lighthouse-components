@@ -33,6 +33,7 @@ Item {
 
     signal directoryExpanded(string path, bool is_cached)
     signal selectionChanged(var paths)
+    signal renamed(string fullPath, string newName)
 
     property alias tableView: tableView
     property Menu contextMenu: null
@@ -246,10 +247,46 @@ Item {
                     color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
                 }
             }
+
+            TableView.editDelegate: TextField {
+                anchors.fill: parent
+                text: viewDelegate.name
+                color: palette.text
+                verticalAlignment: Text.AlignVCenter
+
+                Component.onCompleted: selectAll()
+
+                TableView.onCommit: {
+                    let newName = text.trim()
+                    if (newName.length > 0 && newName.indexOf("/") === -1) {
+                        root.renamed(root.getPathAtRow(viewDelegate.row), newName)
+                    }
+                    TableView.view.closeEditor()
+                }
+
+                Keys.onEscapePressed: TableView.view.closeEditor()
+
+                onActiveFocusChanged: {
+                    if (!activeFocus) {
+                        TableView.view.closeEditor()
+                    }
+                }
+            }
+        }
+    }
+
+    function startRename() {
+        let selected = tableView.selectionModel.selectedRows(0)
+        if (selected.length === 1) {
+            let row = selected[0].row
+            tableView.selectionModel.setCurrentIndex(
+                tableView.model.index(row, 0), ItemSelectionModel.Current)
+            tableView.edit(tableView.index(row, 0))
         }
     }
 
     function refreshView() {
+        tableView.closeEditor()
         tableModel.clear()
         tableView.selectionModel.clearSelection()
         root._anchorRow = -1
@@ -285,11 +322,8 @@ Item {
     }
 
     function getPathAtRow(row) {
-        if (row < 0 || !tableModel.rows || row >= tableModel.rowCount) {
-            return ""
-        }
-        let rowData = tableModel.rows[row]
-        return rowData && rowData.fullPath ? String(rowData.fullPath) : ""
+        // If row is invalid, intentionally fail hard instead of returning empty string.
+        return tableModel.rows[row].fullPath;
     }
 
     /// Inserts new directory contents to the table without re-rendering the entire table.
@@ -311,7 +345,7 @@ Item {
         }
 
         if (rowIndex < 0) {
-            console.error(`Row index not found for path ${normalizedPath}`)
+            console.error(`Row index not found for path ${dirPath}`)
             return
         }
 

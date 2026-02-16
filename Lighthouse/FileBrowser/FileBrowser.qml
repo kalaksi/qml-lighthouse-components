@@ -27,6 +27,8 @@ Item {
         dirTreeView.selectedPaths[0] : "/"
     readonly property var selectedFiles: fileListView && fileListView.selectedPaths.length > 0 ?
         fileListView.selectedPaths : []
+    readonly property bool hasSingleSelection: (root.useSplitView && fileListView.selectedPaths.length === 1) ||
+        (!root.useSplitView && treeView.selectedPaths.length === 1)
 
     property int _maxColumns: 8
     property Menu contextMenu: null
@@ -37,6 +39,7 @@ Item {
     property var _currentFileListView: null
 
     signal directoryExpanded(string path, bool isCached)
+    signal renamed(string fullPath, string newName)
 
     onColumnHeadersChanged: {
         if (root.columnHeaders.length > root._maxColumns) {
@@ -88,6 +91,10 @@ Item {
 
             onDirectoryExpanded: function(path, isCached) {
                 root.directoryExpanded(path, isCached)
+            }
+
+            onRenamed: function(fullPath, newName) {
+                root.renamed(fullPath, newName)
             }
 
             Component.onCompleted: {
@@ -175,6 +182,10 @@ Item {
                     root.directoryExpanded(path, isCached)
                 }
 
+                onRenamed: function(fullPath, newName) {
+                    root.renamed(fullPath, newName)
+                }
+
                 Component.onCompleted: {
                     root._currentFileListView = fileListView
                     Qt.callLater(function() {
@@ -255,6 +266,15 @@ Item {
         root._cache = {}
         root._expandedDirs = {}
         root.refreshView()
+    }
+
+    function startRenameForSelected() {
+        if (root.useSplitView) {
+            fileListView.startRename()
+        }
+        else {
+            treeView.startRename()
+        }
     }
 
     function buildEntry(directory, name, fileType, columnData) {
