@@ -17,7 +17,11 @@ Item {
     property color headerColor: "transparent"
     property color headerBorderColor: palette.mid
     property int _maxColumns: 8
+    property int sortColumnIndex: -1
+    property bool sortAscending: true
     property var _headerModel: root._buildHeaderModel()
+
+    signal headerClicked(int columnIndex)
 
     HorizontalHeaderView {
         id: headerView
@@ -56,24 +60,47 @@ Item {
                 opacity: hoverArea.containsMouse ? 0.15 : 0
             }
 
-            Label {
+            Row {
                 anchors.fill: parent
                 anchors.leftMargin: 6
                 anchors.rightMargin: 1
-                text: (cellRoot.row >= 0 && cellRoot.row < root._headerModel.length
-                    && root._headerModel[cellRoot.row].display !== undefined)
-                    ? root._headerModel[cellRoot.row].display
-                    : ""
-                color: palette.buttonText
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
+                spacing: 4
+
+                Label {
+                    width: parent.width - (sortIndicator.visible ? sortIndicator.width + parent.spacing : 0)
+                    height: parent.height
+                    text: (cellRoot.row >= 0 && cellRoot.row < root._headerModel.length
+                        && root._headerModel[cellRoot.row].display !== undefined)
+                        ? root._headerModel[cellRoot.row].display
+                        : ""
+                    color: palette.buttonText
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+
+                Label {
+                    id: sortIndicator
+                    visible: root.sortColumnIndex === cellRoot.row
+                    height: parent.height
+                    text: root.sortAscending ? "▲" : "▼"
+                    color: palette.buttonText
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: Math.max(6, root.rowHeight - 10)
+                }
             }
 
             MouseArea {
                 id: hoverArea
                 anchors.fill: parent
+                anchors.leftMargin: 6
+                anchors.rightMargin: 2
                 hoverEnabled: true
-                acceptedButtons: Qt.NoButton
+                acceptedButtons: Qt.LeftButton
+                onClicked: function(mouse) {
+                    if (mouse.button === Qt.LeftButton) {
+                        root.headerClicked(cellRoot.row)
+                    }
+                }
             }
         }
     }

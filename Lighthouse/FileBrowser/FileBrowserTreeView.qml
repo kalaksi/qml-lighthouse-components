@@ -30,6 +30,8 @@ Item {
     property var _cache: ({})
     property var _expandedDirs: ({})
     property int _maxColumns: 8
+    property int sortColumnIndex: 0
+    property bool sortAscending: true
     // For multi-selection.
     property int _anchorRow: -1
 
@@ -44,6 +46,8 @@ Item {
     onRootPathChanged: refreshView()
     onHideDirectoriesChanged: refreshView()
     onHideFilesChanged: refreshView()
+    onSortColumnIndexChanged: refreshView()
+    onSortAscendingChanged: refreshView()
 
     TableView {
         id: tableView
@@ -401,6 +405,7 @@ Item {
     }
 
     function _sortEntries(entries) {
+        let key = root.sortColumnIndex === 0 ? "name" : "column-" + (root.sortColumnIndex - 1)
         return [...entries].sort(function(a, b) {
             if (a.fileType === "d" && b.fileType !== "d") {
                 return -1
@@ -408,7 +413,9 @@ Item {
             else if (a.fileType !== "d" && b.fileType === "d") {
                 return 1
             }
-            return a.name.localeCompare(b.name)
+            let aVal = a[key] !== undefined ? String(a[key]) : ""
+            let bVal = b[key] !== undefined ? String(b[key]) : ""
+            return root.sortAscending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
         })
     }
 

@@ -35,6 +35,8 @@ Item {
         (!root.useSplitView && treeView.selectedPaths.length === 1)
 
     property int _maxColumns: 8
+    property int sortColumnIndex: 0
+    property bool sortAscending: true
     property Menu contextMenu: null
     property string _fileListRootPath: ""
     property var _cache: ({})
@@ -64,6 +66,18 @@ Item {
             headerColor: root.headerColor
             headerBorderColor: root.headerBorderColor
             _maxColumns: root._maxColumns
+            sortColumnIndex: root.sortColumnIndex
+            sortAscending: root.sortAscending
+
+            onHeaderClicked: function(columnIndex) {
+                if (columnIndex === root.sortColumnIndex) {
+                    root.sortAscending = !root.sortAscending
+                }
+                else {
+                    root.sortColumnIndex = columnIndex
+                    root.sortAscending = true
+                }
+            }
         }
 
         FileBrowserTreeView {
@@ -78,6 +92,8 @@ Item {
             _cache: root._cache
             _expandedDirs: root._expandedDirs
             _maxColumns: root._maxColumns
+            sortColumnIndex: root.sortColumnIndex
+            sortAscending: root.sortAscending
             rootPath: "/"
             singleSelection: true
 
@@ -155,6 +171,18 @@ Item {
                 headerColor: root.headerColor
                 headerBorderColor: root.headerBorderColor
                 _maxColumns: root._maxColumns
+                sortColumnIndex: root.sortColumnIndex
+                sortAscending: root.sortAscending
+
+                onHeaderClicked: function(columnIndex) {
+                    if (columnIndex === root.sortColumnIndex) {
+                        root.sortAscending = !root.sortAscending
+                    }
+                    else {
+                        root.sortColumnIndex = columnIndex
+                        root.sortAscending = true
+                    }
+                }
             }
 
             FileBrowserTreeView {
@@ -168,6 +196,8 @@ Item {
                 directoryIconSource: root.directoryIconSource
                 _cache: root._cache
                 _maxColumns: root._maxColumns
+                sortColumnIndex: root.sortColumnIndex
+                sortAscending: root.sortAscending
                 rootPath: root.selectedDirectory
                 hideDirectories: root.hideDirectories
                 enableDirectoryNavigation: false
