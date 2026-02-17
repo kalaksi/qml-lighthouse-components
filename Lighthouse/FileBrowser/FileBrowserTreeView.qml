@@ -252,8 +252,8 @@ Item {
                         height: 22
                         flat: true
                         display: AbstractButton.IconOnly
-                        icon.source: root.directoryIconSource !== "" ? root.directoryIconSource : ""
-                        icon.name: root.directoryIconSource !== "" ? "" : "folder"
+                        icon.source: root.directoryIconSource
+                        icon.name: root.directoryIconSource === "" ? "folder" : ""
                         icon.width: 22
                         icon.height: 22
                     }
@@ -316,14 +316,9 @@ Item {
 
     function refreshView() {
         tableView.closeEditor()
-        tableModel.clear()
         tableView.selectionModel.clearSelection()
         root._anchorRow = -1
-
-        let flatList = root._buildFlatList(root.rootPath)
-        for (let row of flatList) {
-            tableModel.appendRow(row)
-        }
+        tableModel.rows = root._buildFlatList(root.rootPath)
     }
 
     function getSelectedPaths() {
