@@ -22,6 +22,9 @@ Item {
     property var columnWidths: [0.4]
     property color headerColor: palette.alternateBase
     property color headerBorderColor: palette.mid
+    property int sortColumnIndex: 0
+    property bool sortAscending: true
+    property Menu contextMenu: null
     property bool useSplitView: false
     /// Hide directories in the file list.
     property bool hideDirectories: false
@@ -35,9 +38,6 @@ Item {
         (!root.useSplitView && treeView.selectedPaths.length === 1)
 
     property int _maxColumns: 8
-    property int sortColumnIndex: 0
-    property bool sortAscending: true
-    property Menu contextMenu: null
     property string _fileListRootPath: ""
     property var _cache: ({})
     property var _expandedDirs: ({})
@@ -65,9 +65,9 @@ Item {
             columnHeaders: root.columnHeaders
             headerColor: root.headerColor
             headerBorderColor: root.headerBorderColor
-            _maxColumns: root._maxColumns
             sortColumnIndex: root.sortColumnIndex
             sortAscending: root.sortAscending
+            _maxColumns: root._maxColumns
 
             onHeaderClicked: function(columnIndex) {
                 if (columnIndex === root.sortColumnIndex) {
@@ -89,15 +89,20 @@ Item {
             arrowWidth: root.arrowWidth
             contextMenu: root.contextMenu
             directoryIconSource: root.directoryIconSource
-            _cache: root._cache
-            _expandedDirs: root._expandedDirs
-            _maxColumns: root._maxColumns
             sortColumnIndex: root.sortColumnIndex
             sortAscending: root.sortAscending
             rootPath: "/"
             singleSelection: true
+            _cache: root._cache
+            _expandedDirs: root._expandedDirs
+            _maxColumns: root._maxColumns
 
             onDirectoryExpanded: function(path, isCached) {
+                root.directoryExpanded(path, isCached)
+            }
+
+            onDirectoryActivated: function(path) {
+                let isCached = root._cache[path] !== undefined
                 root.directoryExpanded(path, isCached)
             }
 
@@ -139,12 +144,13 @@ Item {
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
                 directoryIconSource: root.directoryIconSource
-                _cache: root._cache
-                _expandedDirs: root._expandedDirs
-                _maxColumns: root._maxColumns
                 rootPath: "/"
                 hideFiles: true
                 singleSelection: true
+                enableDirectoryNavigation: true
+                _cache: root._cache
+                _expandedDirs: root._expandedDirs
+                _maxColumns: root._maxColumns
                 columnWidthProvider: function(column, totalWidth) {
                     return column === 0 ? totalWidth : 0
                 }
@@ -268,6 +274,7 @@ Item {
             }
             else {
                 treeView.insertDirectoryContent(normalizedPath, cachedEntries)
+                treeView.rootPath = normalizedPath
             }
         }
     }

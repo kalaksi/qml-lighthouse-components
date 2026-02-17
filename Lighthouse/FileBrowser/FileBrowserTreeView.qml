@@ -20,7 +20,7 @@ Item {
     property string rootPath: "/"
     property bool hideFiles: false
     property bool hideDirectories: false
-    property bool enableDirectoryNavigation: true
+    property bool enableDirectoryNavigation: false
     /// When set, used as Image source for directory rows. When empty, a generic folder symbol is shown.
     property string directoryIconSource: ""
     /// Meant for read-only access.
