@@ -80,9 +80,6 @@ Item {
             _maxColumns: root._maxColumns
             rootPath: "/"
             singleSelection: true
-            columnWidthProvider: function(column, totalWidth) {
-                return root._getColumnWidth(column, totalWidth, false)
-            }
 
             onDirectoryExpanded: function(path, isCached) {
                 root.directoryExpanded(path, isCached)
@@ -90,6 +87,15 @@ Item {
 
             onRenamed: function(fullPath, newName) {
                 root.renamed(fullPath, newName)
+            }
+
+            Component.onCompleted: {
+                Qt.callLater(function() {
+                    let tw = treeView.tableView.width
+                    for (let c = 0; c < 1 + root._maxColumns; c++) {
+                        treeView.tableView.setColumnWidth(c, root._getColumnWidth(c, tw))
+                    }
+                })
             }
         }
     }
@@ -184,10 +190,8 @@ Item {
                     Qt.callLater(function() {
                         let tw = fileListView.tableView.width
                         for (let c = 0; c < 1 + root._maxColumns; c++) {
-                            let width = root._getColumnWidth(c, tw, false)
-                            fileListView.tableView.setColumnWidth(c, width)
+                            fileListView.tableView.setColumnWidth(c, root._getColumnWidth(c, tw))
                         }
-                        fileListView.tableView.forceLayout()
                     })
                 }
             }
