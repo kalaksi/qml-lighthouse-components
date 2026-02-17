@@ -18,8 +18,8 @@ Item {
     property int rowHeight: 28
     property int arrowWidth: 20
     property int nameColumnWidth: 200
-    property var columnHeaders: ["Column 1", "Column 2"]
-    property var columnWidths: [0.6, 0.4]
+    property var columnHeaders: []
+    property var columnWidths: [0.4]
     property color headerColor: palette.alternateBase
     property color headerBorderColor: palette.mid
     property bool useSplitView: false
@@ -50,13 +50,6 @@ Item {
         if (root.columnHeaders.length > root._maxColumns) {
             console.error("FileBrowser: too many columns, maximum allowed is " + root._maxColumns + ".")
             root.columnHeaders = root.columnHeaders.slice(0, root._maxColumns)
-        }
-    }
-
-    onColumnWidthsChanged: {
-        if (root.columnWidths.length !== root.columnHeaders.length) {
-            console.error("FileBrowser: columnWidths count does not match columnHeaders count")
-            root.columnWidths = root.columnWidths.slice(0, root.columnHeaders.length)
         }
     }
 
@@ -138,7 +131,7 @@ Item {
                 hideFiles: true
                 singleSelection: true
                 columnWidthProvider: function(column, totalWidth) {
-                    return root._getColumnWidth(column, totalWidth, true)
+                    return column === 0 ? totalWidth : 0
                 }
 
                 onDirectoryExpanded: function(path, isCached) {
@@ -335,30 +328,21 @@ Item {
         return path
     }
 
-    function _getColumnWidth(column, tableViewWidth, hideColumns) {
-        if (column === 0) {
-            if (hideColumns) {
-                return tableViewWidth
-            }
-            return tableViewWidth * 0.4
+    function _getColumnWidth(column, tableViewWidth) {
+        if (column < root.columnWidths.length) {
+            return root.columnWidths[column] * tableViewWidth
         }
-        else {
-            if (hideColumns) {
-                return 0
-            }
 
-            let columnIndex = column - 1
-            if (columnIndex < 0 || columnIndex >= root.columnHeaders.length) {
-                return 0
-            }
-
-            let totalPercentage = root.columnWidths.reduce((total, width) => total + width, 0)
-            if (totalPercentage <= 0.0) {
-                return 0
-            }
-
-            let columnPercentage = root.columnWidths[columnIndex] || 0.0
-            return (tableViewWidth * 0.6) * (columnPercentage / totalPercentage)
+        if (column > root.columnHeaders.length) {
+            return 0
         }
+
+        let missingWidths = root.columnHeaders.length - root.columnWidths.length + 1
+        if (missingWidths > 0) {
+            let remainingWidth = Math.max(0.0, 1.0 - root.columnWidths.reduce((total, width) => total + width, 0))
+            let evenWidth = remainingWidth / missingWidths
+            return evenWidth * tableViewWidth
+        }
+        return 0
     }
 }
