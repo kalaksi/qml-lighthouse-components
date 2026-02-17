@@ -25,6 +25,8 @@ Item {
     property bool useSplitView: false
     /// Hide directories in the file list.
     property bool hideDirectories: false
+    /// When set, used as directory icon in tree views. When empty, a generic folder symbol is shown.
+    property string directoryIconSource: ""
     readonly property string selectedDirectory: dirTreeView && dirTreeView.selectedPaths.length > 0 ?
         dirTreeView.selectedPaths[0] : "/"
     readonly property var selectedFiles: fileListView && fileListView.selectedPaths.length > 0 ?
@@ -81,6 +83,7 @@ Item {
             rowHeight: root.rowHeight
             arrowWidth: root.arrowWidth
             contextMenu: root.contextMenu
+            directoryIconSource: root.directoryIconSource
             _cache: root._cache
             _expandedDirs: root._expandedDirs
             _maxColumns: root._maxColumns
@@ -126,6 +129,7 @@ Item {
                 indentWidth: root.indentWidth
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
+                directoryIconSource: root.directoryIconSource
                 _cache: root._cache
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
@@ -172,11 +176,12 @@ Item {
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
                 contextMenu: root.contextMenu
+                directoryIconSource: root.directoryIconSource
                 _cache: root._cache
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
                 rootPath: root.selectedDirectory
-                hideDirectories: !root.hideDirectories
+                hideDirectories: root.hideDirectories
                 enableDirectoryNavigation: false
 
                 onDirectoryExpanded: function(path, isCached) {

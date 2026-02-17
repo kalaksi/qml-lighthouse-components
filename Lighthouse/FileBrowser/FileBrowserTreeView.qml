@@ -21,6 +21,8 @@ Item {
     property bool hideFiles: false
     property bool hideDirectories: false
     property bool enableDirectoryNavigation: true
+    /// When set, used as Image source for directory rows. When empty, a generic folder symbol is shown.
+    property string directoryIconSource: ""
     /// Meant for read-only access.
     property var selectedPaths: []
     property bool singleSelection: false
@@ -231,8 +233,23 @@ Item {
                         }
                     }
 
+
+                    Button {
+                        id: directoryIconButton
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: viewDelegate.fileType === "d"
+                        width: 22
+                        height: 22
+                        flat: true
+                        display: AbstractButton.IconOnly
+                        icon.source: root.directoryIconSource !== "" ? root.directoryIconSource : ""
+                        icon.name: root.directoryIconSource !== "" ? "" : "folder"
+                        icon.width: 22
+                        icon.height: 22
+                    }
+
                     Label {
-                        width: parent.width - arrowIndentArea.width - parent.spacing
+                        width: parent.width - arrowIndentArea.width - directoryIconButton.width - parent.spacing
                         height: parent.height
                         text: viewDelegate.name
                         elide: Text.ElideRight
