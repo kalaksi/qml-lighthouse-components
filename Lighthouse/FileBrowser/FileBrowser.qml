@@ -161,7 +161,6 @@ Item {
                 contextMenu: root.contextMenu
                 directoryIconSource: root.directoryIconSource
                 _cache: root._cache
-                _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
                 rootPath: root.selectedDirectory
                 hideDirectories: root.hideDirectories
