@@ -39,6 +39,8 @@ Item {
     property Menu contextMenu: null
 
     onRootPathChanged: refreshView()
+    onHideDirectoriesChanged: refreshView()
+    onHideFilesChanged: refreshView()
 
     TableView {
         id: tableView

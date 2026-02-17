@@ -23,6 +23,8 @@ Item {
     property color headerColor: palette.alternateBase
     property color headerBorderColor: palette.mid
     property bool useSplitView: false
+    /// Hide directories in the file list.
+    property bool hideDirectories: false
     readonly property string selectedDirectory: dirTreeView && dirTreeView.selectedPaths.length > 0 ?
         dirTreeView.selectedPaths[0] : "/"
     readonly property var selectedFiles: fileListView && fileListView.selectedPaths.length > 0 ?
@@ -54,7 +56,6 @@ Item {
             root.columnWidths = root.columnWidths.slice(0, root.columnHeaders.length)
         }
     }
-
 
     Column {
         id: treeViewContainer
@@ -175,7 +176,7 @@ Item {
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
                 rootPath: root.selectedDirectory
-                hideDirectories: true
+                hideDirectories: !root.hideDirectories
                 enableDirectoryNavigation: false
 
                 onDirectoryExpanded: function(path, isCached) {
