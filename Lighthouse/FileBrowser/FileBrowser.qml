@@ -39,9 +39,6 @@ Item {
     property string _fileListRootPath: ""
     property var _cache: ({})
     property var _expandedDirs: ({})
-    property var _currentTreeView: null
-    property var _currentDirectoryTreeView: null
-    property var _currentFileListView: null
 
     signal directoryExpanded(string path, bool isCached)
     signal renamed(string fullPath, string newName)
@@ -94,10 +91,6 @@ Item {
             onRenamed: function(fullPath, newName) {
                 root.renamed(fullPath, newName)
             }
-
-            Component.onCompleted: {
-                root._currentTreeView = treeView
-            }
         }
     }
 
@@ -140,10 +133,6 @@ Item {
 
                 onSelectionChanged: function(_paths) {
                     fileListView.refreshView()
-                }
-
-                Component.onCompleted: {
-                    root._currentDirectoryTreeView = dirTreeView
                 }
             }
         }
@@ -193,7 +182,6 @@ Item {
                 }
 
                 Component.onCompleted: {
-                    root._currentFileListView = fileListView
                     Qt.callLater(function() {
                         let tw = fileListView.tableView.width
                         for (let c = 0; c < 1 + root._maxColumns; c++) {
@@ -231,43 +219,40 @@ Item {
         }
 
         if (wasCached) {
-            if (root.useSplitView && root._currentFileListView) {
-                root._currentFileListView.refreshView()
+            if (root.useSplitView) {
+                fileListView.refreshView()
             }
-            else if (root._currentTreeView) {
-                root._currentTreeView.refreshView()
+            else {
+                treeView.refreshView()
             }
         }
         else {
-            if (root.useSplitView && root._currentDirectoryTreeView) {
-                root._currentDirectoryTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
-                root._currentFileListView.refreshView()
-                if (root._fileListRootPath === normalizedPath) {
-                    root._currentDirectoryTreeView.selectPath(normalizedPath)
-                }
+            if (root.useSplitView) {
+                dirTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
+                fileListView.refreshView()
             }
-            else if (root._currentTreeView) {
-                root._currentTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
+            else {
+                treeView.insertDirectoryContent(normalizedPath, cachedEntries)
             }
         }
     }
 
     function refreshView() {
         if (root.useSplitView) {
-            if (root._currentDirectoryTreeView) root._currentDirectoryTreeView.refreshView()
-            if (root._currentFileListView) root._currentFileListView.refreshView()
+            dirTreeView.refreshView()
+            fileListView.refreshView()
         }
         else {
-            if (root._currentTreeView) root._currentTreeView.refreshView()
+            treeView.refreshView()
         }
     }
 
     function toggleDirectory(normalizedPath) {
         if (root.useSplitView) {
-            if (root._currentDirectoryTreeView) root._currentDirectoryTreeView.toggleDirectory(normalizedPath)
+            dirTreeView.toggleDirectory(normalizedPath)
         }
         else {
-            if (root._currentTreeView) root._currentTreeView.toggleDirectory(normalizedPath)
+            treeView.toggleDirectory(normalizedPath)
         }
     }
 
