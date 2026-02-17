@@ -34,6 +34,7 @@ Item {
     property int _anchorRow: -1
 
     signal directoryExpanded(string path, bool is_cached)
+    signal directoryActivated(string path)
     signal selectionChanged(var paths)
     signal renamed(string fullPath, string newName)
 
@@ -77,15 +78,14 @@ Item {
         selectionModel: ItemSelectionModel {
             onSelectionChanged: {
                 root.selectedPaths = root.getSelectedPaths()
-                if (root.selectedPaths.length === 1 &&
-                    root.selectedPaths[0].endsWith("/")) {
+                if (root.enableDirectoryNavigation
+                    && root.selectedPaths.length === 1
+                    && root.selectedPaths[0].endsWith("/")) {
 
                     let isCached = root._cache[root.selectedPaths[0]] !== undefined
                     root.directoryExpanded(root.selectedPaths[0], isCached)
                 }
-                else {
-                    root.selectionChanged(root.selectedPaths)
-                }
+                root.selectionChanged(root.selectedPaths)
             }
         }
 
@@ -196,6 +196,12 @@ Item {
                                     root._anchorRow = viewDelegate.row
                                 }
                             }
+                        }
+                    }
+                    onDoubleClicked: function(mouse) {
+                        if (mouse.button === Qt.LeftButton && !root.enableDirectoryNavigation
+                            && viewDelegate.fileType === "d") {
+                            root.directoryActivated(viewDelegate.fullPath)
                         }
                     }
                 }
@@ -343,6 +349,18 @@ Item {
     function getPathAtRow(row) {
         // If row is invalid, intentionally fail hard instead of returning empty string.
         return tableModel.rows[row].fullPath;
+    }
+
+    function selectPath(normalizedPath) {
+        for (let r = 0; r < tableModel.rowCount; r++) {
+            if (root.getPathAtRow(r) === normalizedPath) {
+                tableView.selectionModel.select(
+                    tableView.model.index(r, 0),
+                    ItemSelectionModel.ClearAndSelect | ItemSelectionModel.Current | ItemSelectionModel.Rows
+                )
+                return
+            }
+        }
     }
 
     /// Inserts new directory contents to the table without re-rendering the entire table.

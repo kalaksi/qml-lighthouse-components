@@ -36,6 +36,7 @@ Item {
 
     property int _maxColumns: 8
     property Menu contextMenu: null
+    property string _fileListRootPath: ""
     property var _cache: ({})
     property var _expandedDirs: ({})
     property var _currentTreeView: null
@@ -188,6 +189,12 @@ Item {
                     root.directoryExpanded(path, isCached)
                 }
 
+                onDirectoryActivated: function(path) {
+                    let isCached = root._cache[path] !== undefined
+                    root.directoryExpanded(path, isCached)
+                    dirTreeView.selectPath(path)
+                }
+
                 onRenamed: function(fullPath, newName) {
                     root.renamed(fullPath, newName)
                 }
@@ -242,6 +249,9 @@ Item {
             if (root.useSplitView && root._currentDirectoryTreeView) {
                 root._currentDirectoryTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
                 root._currentFileListView.refreshView()
+                if (root._fileListRootPath === normalizedPath) {
+                    root._currentDirectoryTreeView.selectPath(normalizedPath)
+                }
             }
             else if (root._currentTreeView) {
                 root._currentTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
