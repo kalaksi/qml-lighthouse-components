@@ -326,7 +326,6 @@ Item {
         return tableView.selectionModel
             .selectedRows(0)
             .map(row => root.getPathAtRow(row.row))
-            .filter(p => p !== "")
     }
 
     function toggleDirectory(normalizedPath) {

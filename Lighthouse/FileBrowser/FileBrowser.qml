@@ -201,8 +201,10 @@ Item {
     function openDirectory(dirPath, fileEntries) {
         let normalizedPath = root._normalizeDirectoryPath(dirPath)
 
-        if (normalizedPath in root._expandedDirs && root._expandedDirs[normalizedPath]
-                && (fileEntries === undefined || fileEntries === null)) {
+        if (normalizedPath in root._expandedDirs
+            && root._expandedDirs[normalizedPath] === true
+            && (fileEntries === undefined || fileEntries === null)) {
+
             // Already expanded with content, do nothing.
             return
         }
