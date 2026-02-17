@@ -336,7 +336,7 @@ Item {
                 return 0
             }
 
-            let totalPercentage = root.columnWidths.reduce((acc, width) => acc + width, 0)
+            let totalPercentage = root.columnWidths.reduce((total, width) => total + width, 0)
             if (totalPercentage <= 0.0) {
                 return 0
             }

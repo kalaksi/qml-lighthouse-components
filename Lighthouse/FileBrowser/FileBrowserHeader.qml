@@ -27,6 +27,7 @@ Item {
         height: root.rowHeight
         syncView: root.syncView
         model: root._headerModel
+        movableColumns: false
         rowHeightProvider: function(row) { return root.rowHeight }
         delegate: Rectangle {
             id: cellRoot
@@ -49,6 +50,12 @@ Item {
                 color: root.headerBorderColor
             }
 
+            Rectangle {
+                anchors.fill: parent
+                color: palette.highlight
+                opacity: hoverArea.containsMouse ? 0.15 : 0
+            }
+
             Label {
                 anchors.fill: parent
                 anchors.leftMargin: 6
@@ -60,6 +67,13 @@ Item {
                 color: palette.buttonText
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
+            }
+
+            MouseArea {
+                id: hoverArea
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
             }
         }
     }
