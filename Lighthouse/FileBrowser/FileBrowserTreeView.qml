@@ -143,11 +143,87 @@ Item {
             contentItem: Item {
                 anchors.fill: parent
 
+                Row {
+                    id: nameColumn
+                    visible: viewDelegate.column === 0
+                    height: parent.height
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: 4
+
+                    Item {
+                        id: arrowIndentArea
+                        property int depth: root.enableDirectoryNavigation ? (viewDelegate.fullPath.split("/").length - 1) : 0
+
+                        width: root.arrowWidth + (arrowIndentArea.depth * root.indentWidth)
+                        height: parent.height
+
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: (arrowIndentArea.depth * root.indentWidth)
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: root.arrowWidth
+                            visible: viewDelegate.fileType === "d" && root.enableDirectoryNavigation
+                            text: root._expandedDirs[viewDelegate.fullPath] === true ? "▼" : "▶"
+                            color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
+                            verticalAlignment: Text.AlignVCenter
+
+                            MouseArea {
+                                anchors.fill: parent
+                                propagateComposedEvents: false
+                                onClicked: root.toggleDirectory(viewDelegate.fullPath)
+                            }
+                        }
+                    }
+
+
+                    Button {
+                        id: directoryIconButton
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: viewDelegate.fileType === "d"
+                        width: 22
+                        height: 22
+                        flat: true
+                        display: AbstractButton.IconOnly
+                        icon.source: root.directoryIconSource !== "" ? root.directoryIconSource : ""
+                        icon.name: root.directoryIconSource !== "" ? "" : "folder"
+                        icon.width: 22
+                        icon.height: 22
+                    }
+
+                    Label {
+                        id: nameLabel
+                        width: parent.width - arrowIndentArea.width - directoryIconButton.width - parent.spacing
+                        height: parent.height
+                        text: viewDelegate.name
+                        elide: Text.ElideRight
+                        color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
+                        verticalAlignment: Text.AlignVCenter
+
+                        ToolTip.visible: cellMouseArea.containsMouse && nameLabel.truncated
+                        ToolTip.text: viewDelegate.name
+                    }
+                }
+
+                Label {
+                    id: columnValueLabel
+                    visible: viewDelegate.column > 0
+                    anchors.fill: parent
+                    text: viewDelegate.columnValue
+                    elide: Text.ElideRight
+                    color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
+
+                    ToolTip.visible: cellMouseArea.containsMouse && columnValueLabel.truncated
+                    ToolTip.text: viewDelegate.columnValue
+                }
+
                 // TableView doesn't seem to update ItemSelectionModel properly with custom delegate,
                 // so have to implement selection manually.
                 MouseArea {
+                    id: cellMouseArea
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    hoverEnabled: true
                     onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             if (root.contextMenu) root.contextMenu.popup()
@@ -208,72 +284,6 @@ Item {
                             root.directoryActivated(viewDelegate.fullPath)
                         }
                     }
-                }
-
-                Row {
-                    id: nameColumn
-                    visible: viewDelegate.column === 0
-                    height: parent.height
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    spacing: 4
-
-                    Item {
-                        id: arrowIndentArea
-                        property int depth: root.enableDirectoryNavigation ? (viewDelegate.fullPath.split("/").length - 1) : 0
-
-                        width: root.arrowWidth + (arrowIndentArea.depth * root.indentWidth)
-                        height: parent.height
-
-                        Text {
-                            anchors.left: parent.left
-                            anchors.leftMargin: (arrowIndentArea.depth * root.indentWidth)
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: root.arrowWidth
-                            visible: viewDelegate.fileType === "d" && root.enableDirectoryNavigation
-                            text: root._expandedDirs[viewDelegate.fullPath] === true ? "▼" : "▶"
-                            color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
-                            verticalAlignment: Text.AlignVCenter
-
-                            MouseArea {
-                                anchors.fill: parent
-                                propagateComposedEvents: false
-                                onClicked: root.toggleDirectory(viewDelegate.fullPath)
-                            }
-                        }
-                    }
-
-
-                    Button {
-                        id: directoryIconButton
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: viewDelegate.fileType === "d"
-                        width: 22
-                        height: 22
-                        flat: true
-                        display: AbstractButton.IconOnly
-                        icon.source: root.directoryIconSource
-                        icon.name: root.directoryIconSource === "" ? "folder" : ""
-                        icon.width: 22
-                        icon.height: 22
-                    }
-
-                    Label {
-                        width: parent.width - arrowIndentArea.width - directoryIconButton.width - parent.spacing
-                        height: parent.height
-                        text: viewDelegate.name
-                        elide: Text.ElideRight
-                        color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
-
-                Label {
-                    visible: viewDelegate.column > 0
-                    anchors.fill: parent
-                    text: viewDelegate.columnValue
-                    elide: Text.ElideRight
-                    color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
                 }
             }
 
