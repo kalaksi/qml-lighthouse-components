@@ -314,6 +314,16 @@ Item {
         }
     }
 
+    Item {
+        anchors.fill: parent
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            onClicked: if (root.contextMenu) root.contextMenu.popup()
+        }
+    }
+
     function startRename() {
         let selected = tableView.selectionModel.selectedRows(0)
         if (selected.length === 1) {
