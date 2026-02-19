@@ -34,6 +34,8 @@ Item {
     property bool sortAscending: true
     // For multi-selection.
     property int _anchorRow: -1
+    // Need to store multiple rows because of timing issues with single value.
+    property var _hoveredRows: []
 
     signal directoryExpanded(string path, bool is_cached)
     signal directoryActivated(string path)
@@ -143,6 +145,12 @@ Item {
             contentItem: Item {
                 anchors.fill: parent
 
+                Rectangle {
+                    visible: root._hoveredRows.indexOf(viewDelegate.row) >= 0
+                    anchors.fill: parent
+                    color: "#15ffffff"
+                }
+
                 Row {
                     id: nameColumn
                     visible: viewDelegate.column === 0
@@ -200,7 +208,7 @@ Item {
                         color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
                         verticalAlignment: Text.AlignVCenter
 
-                        ToolTip.visible: cellMouseArea.containsMouse && nameLabel.truncated
+                        ToolTip.visible: root._hoveredRows.indexOf(viewDelegate.row) >= 0 && nameLabel.truncated
                         ToolTip.text: viewDelegate.name
                     }
                 }
@@ -213,7 +221,7 @@ Item {
                     elide: Text.ElideRight
                     color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
 
-                    ToolTip.visible: cellMouseArea.containsMouse && columnValueLabel.truncated
+                    ToolTip.visible: root._hoveredRows.indexOf(viewDelegate.row) >= 0 && columnValueLabel.truncated
                     ToolTip.text: viewDelegate.columnValue
                 }
 
@@ -224,6 +232,13 @@ Item {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     hoverEnabled: true
+                    onEntered: {
+                        if (root._hoveredRows.indexOf(viewDelegate.row) < 0)
+                            root._hoveredRows = root._hoveredRows.concat(viewDelegate.row)
+                    }
+                    onExited: {
+                        root._hoveredRows = root._hoveredRows.filter(function(r) { return r !== viewDelegate.row })
+                    }
                     onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             if (root.contextMenu) root.contextMenu.popup()
@@ -328,8 +343,7 @@ Item {
         let selected = tableView.selectionModel.selectedRows(0)
         if (selected.length === 1) {
             let row = selected[0].row
-            tableView.selectionModel.setCurrentIndex(
-                tableView.model.index(row, 0), ItemSelectionModel.Current)
+            tableView.selectionModel.setCurrentIndex(tableView.model.index(row, 0), ItemSelectionModel.Current)
             tableView.edit(tableView.index(row, 0))
         }
     }
@@ -338,6 +352,7 @@ Item {
         tableView.closeEditor()
         tableView.selectionModel.clearSelection()
         root._anchorRow = -1
+        root._hoveredRows = []
         tableModel.rows = root._buildFlatList(root.rootPath)
     }
 
