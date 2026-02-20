@@ -32,10 +32,16 @@ Item {
     property string directoryIconSource: ""
     /// Paths to show with reduced opacity (e.g. rows marked for move).
     property var dimmedPaths: []
+
     readonly property string selectedDirectory: dirTreeView && dirTreeView.selectedPaths.length > 0 ?
         dirTreeView.selectedPaths[0] : "/"
+
     readonly property var selectedFiles: fileListView && fileListView.selectedPaths.length > 0 ?
         fileListView.selectedPaths : []
+
+    readonly property var selectedFilesOnly: root.selectedFiles ?
+        root.selectedFiles.filter(path => !path.endsWith("/")) : []
+
     readonly property bool hasSingleSelection: (root.useSplitView && fileListView.selectedPaths.length === 1) ||
         (!root.useSplitView && treeView.selectedPaths.length === 1)
 
