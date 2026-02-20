@@ -38,6 +38,8 @@ Item {
     property int _anchorRow: -1
     // Need to store multiple rows because of timing issues with single value.
     property var _hoveredRows: []
+    property int hoveredRow: -1
+    property int hoveredColumn: -1
 
     signal directoryExpanded(string path, bool is_cached)
     signal directoryActivated(string path)
@@ -165,7 +167,8 @@ Item {
 
                     Item {
                         id: arrowIndentArea
-                        property int depth: root.enableDirectoryNavigation ? (viewDelegate.fullPath.split("/").length - 1) : 0
+                        property int depth: root.enableDirectoryNavigation ?
+                            (viewDelegate.fullPath.split("/").length - 1) : 0
 
                         width: root.arrowWidth + (arrowIndentArea.depth * root.indentWidth)
                         height: parent.height
@@ -212,7 +215,10 @@ Item {
                         color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
                         verticalAlignment: Text.AlignVCenter
 
-                        ToolTip.visible: root._hoveredRows.indexOf(viewDelegate.row) >= 0 && nameLabel.truncated
+                        ToolTip.visible: viewDelegate.column === 0
+                            && root.hoveredRow === viewDelegate.row
+                            && root.hoveredColumn === viewDelegate.column
+                            && nameLabel.truncated
                         ToolTip.text: viewDelegate.name
                     }
                 }
@@ -225,7 +231,9 @@ Item {
                     elide: Text.ElideRight
                     color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
 
-                    ToolTip.visible: root._hoveredRows.indexOf(viewDelegate.row) >= 0 && columnValueLabel.truncated
+                    ToolTip.visible: root.hoveredRow === viewDelegate.row
+                        && root.hoveredColumn === viewDelegate.column
+                        && columnValueLabel.truncated
                     ToolTip.text: viewDelegate.columnValue
                 }
 
@@ -237,10 +245,14 @@ Item {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     hoverEnabled: true
                     onEntered: {
+                        root.hoveredRow = viewDelegate.row
+                        root.hoveredColumn = viewDelegate.column
                         if (root._hoveredRows.indexOf(viewDelegate.row) < 0)
                             root._hoveredRows = root._hoveredRows.concat(viewDelegate.row)
                     }
                     onExited: {
+                        root.hoveredRow = -1
+                        root.hoveredColumn = -1
                         root._hoveredRows = root._hoveredRows.filter(function(r) { return r !== viewDelegate.row })
                     }
                     onClicked: function(mouse) {
@@ -357,6 +369,8 @@ Item {
         tableView.selectionModel.clearSelection()
         root._anchorRow = -1
         root._hoveredRows = []
+        root.hoveredRow = -1
+        root.hoveredColumn = -1
         tableModel.rows = root._buildFlatList(root.rootPath)
     }
 

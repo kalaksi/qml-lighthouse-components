@@ -32,6 +32,7 @@ Item {
         syncView: root.syncView
         model: root._headerModel
         movableColumns: false
+        interactive: false
         rowHeightProvider: function(row) { return root.rowHeight }
         delegate: Rectangle {
             id: cellRoot
