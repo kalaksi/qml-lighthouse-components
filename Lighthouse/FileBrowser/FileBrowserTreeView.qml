@@ -26,6 +26,8 @@ Item {
     /// Meant for read-only access.
     property var selectedPaths: []
     property bool singleSelection: false
+    /// Paths to show with reduced opacity (e.g. rows marked for move).
+    property var dimmedPaths: []
 
     property var _cache: ({})
     property var _expandedDirs: ({})
@@ -101,6 +103,8 @@ Item {
 
         delegate: TableViewDelegate {
             id: viewDelegate
+
+            opacity: root.dimmedPaths.indexOf(viewDelegate.fullPath) >= 0 ? 0.55 : 1
 
             property string fullPath: {
                 if (viewDelegate.row >= 0 && viewDelegate.row < tableModel.rowCount && tableModel.rows) {

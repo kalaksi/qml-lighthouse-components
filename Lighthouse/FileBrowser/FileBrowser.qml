@@ -30,6 +30,8 @@ Item {
     property bool hideDirectories: false
     /// When set, used as directory icon in tree views. When empty, a generic folder symbol is shown.
     property string directoryIconSource: ""
+    /// Paths to show with reduced opacity (e.g. rows marked for move).
+    property var dimmedPaths: []
     readonly property string selectedDirectory: dirTreeView && dirTreeView.selectedPaths.length > 0 ?
         dirTreeView.selectedPaths[0] : "/"
     readonly property var selectedFiles: fileListView && fileListView.selectedPaths.length > 0 ?
@@ -89,6 +91,7 @@ Item {
             arrowWidth: root.arrowWidth
             contextMenu: root.contextMenu
             directoryIconSource: root.directoryIconSource
+            dimmedPaths: root.dimmedPaths
             sortColumnIndex: root.sortColumnIndex
             sortAscending: root.sortAscending
             rootPath: "/"
@@ -144,6 +147,7 @@ Item {
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
                 directoryIconSource: root.directoryIconSource
+                dimmedPaths: root.dimmedPaths
                 rootPath: "/"
                 hideFiles: true
                 singleSelection: true
@@ -200,6 +204,7 @@ Item {
                 arrowWidth: root.arrowWidth
                 contextMenu: root.contextMenu
                 directoryIconSource: root.directoryIconSource
+                dimmedPaths: root.dimmedPaths
                 _cache: root._cache
                 _maxColumns: root._maxColumns
                 sortColumnIndex: root.sortColumnIndex
