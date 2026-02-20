@@ -1,0 +1,3 @@
+module Lighthouse.FilePermissionsDialog
+FilePermissionsDialog 1.0 FilePermissionsDialog.qml
+FilePermissionsDialogContent 1.0 FilePermissionsDialogContent.qml

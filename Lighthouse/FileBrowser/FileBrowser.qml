@@ -313,6 +313,15 @@ Item {
         }
     }
 
+    function getCellValue(path, columnIndex) {
+        let view = root.useSplitView ? fileListView : treeView
+        for (let r = 0; r < view.tableView.model.rowCount; r++) {
+            if (view.getPathAtRow(r) === path)
+                return view.getCellValue(r, columnIndex)
+        }
+        return undefined
+    }
+
     function buildEntry(directory, name, fileType, columnData) {
         if (columnData.length !== root.columnHeaders.length) {
             console.error("Column data length does not match column headers length")

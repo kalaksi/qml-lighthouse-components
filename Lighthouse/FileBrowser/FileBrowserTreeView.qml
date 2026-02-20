@@ -384,6 +384,15 @@ Item {
         return tableModel.rows[row].fullPath;
     }
 
+    function getCellValue(rowIndex, columnIndex) {
+        if (rowIndex < 0 || rowIndex >= tableModel.rowCount || columnIndex < 0 || columnIndex > root._maxColumns) {
+            return undefined
+        }
+
+        let row = tableModel.rows[rowIndex]
+        return columnIndex === 0 ? row.name : row["column-" + (columnIndex - 1)]
+    }
+
     function selectPath(normalizedPath) {
         for (let r = 0; r < tableModel.rowCount; r++) {
             if (root.getPathAtRow(r) === normalizedPath) {

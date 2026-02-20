@@ -6,6 +6,7 @@ QML components used in [Lightkeeper](https://github.com/kalaksi/lightkeeper) and
 
 - **Lighthouse.AceEditor** – QML wrapper for the [Ace](https://ace.c9.io/) code editor (WebView-based).
 - **Lighthouse.FileBrowser** – Pure QML tree-style file browser with configurable columns.
+- **Lighthouse.FilePermissionsDialog** – Dialog for editing Unix file permissions and ownership.
 
 See the `Lighthouse/` directory. Each module has its own QML files and `qmldir`.
   
@@ -14,6 +15,7 @@ Add this repository as a QML import path (e.g. the repo root or the directory th
 ```qml
 import Lighthouse.AceEditor 1.0
 import Lighthouse.FileBrowser 1.0
+import Lighthouse.FilePermissionsDialog 1.0
 ```
 
 # Component: Ace editor
@@ -242,6 +244,7 @@ Copyright © 2026 kalaksi@users.noreply.github.com.
 Modules are licensed independently, see their respective subdirs.  
 Here's a summary:  
 - FileBrowser: GPL-3.0-or-later
+- FilePermissionsDialog: GPL-3.0-or-later
 - AceEditor: BSD-3-Clause
 
 
