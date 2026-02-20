@@ -144,6 +144,9 @@ Item {
                 textRole: "label"
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: ItemDelegate {
+                    required property var modelData
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     text: modelData.label
                     font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 }
@@ -159,6 +162,9 @@ Item {
                 textRole: "label"
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: ItemDelegate {
+                    required property var modelData
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     text: modelData.label
                     font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 }
@@ -174,6 +180,9 @@ Item {
                 textRole: "label"
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: ItemDelegate {
+                    required property var modelData
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     text: modelData.label
                     font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 }
