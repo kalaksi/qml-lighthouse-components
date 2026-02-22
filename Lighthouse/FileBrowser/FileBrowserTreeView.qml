@@ -160,6 +160,7 @@ Item {
 
                 Row {
                     id: nameColumn
+                    z: 1
                     visible: viewDelegate.column === 0
                     height: parent.height
                     anchors.left: parent.left
@@ -168,6 +169,7 @@ Item {
 
                     Item {
                         id: arrowIndentArea
+                        z: 1
                         property int depth: root.enableDirectoryNavigation ?
                             (viewDelegate.fullPath.split(root.directorySeparator).length - 1) : 0
 
@@ -187,6 +189,7 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 propagateComposedEvents: false
+                                acceptedButtons: Qt.LeftButton
                                 onClicked: root.toggleDirectory(viewDelegate.fullPath)
                             }
                         }
@@ -367,12 +370,25 @@ Item {
 
     function refreshView() {
         tableView.closeEditor()
+
+        let oldSelectedPath = ""
+        if (root.enableDirectoryNavigation) {
+            let selected = root.getSelectedPaths()
+            if (selected.length > 0) {
+                oldSelectedPath = selected[0]
+            }
+        }
+
         tableView.selectionModel.clearSelection()
         root._anchorRow = -1
         root._hoveredRows = []
         root.hoveredRow = -1
         root.hoveredColumn = -1
         tableModel.rows = root._buildFlatList(root.rootPath)
+
+        if (root.enableDirectoryNavigation && oldSelectedPath !== "") {
+            root.selectPath(oldSelectedPath)
+        }
     }
 
     function getSelectedPaths() {
@@ -387,14 +403,14 @@ Item {
 
         if (isCurrentlyExpanded) {
             root._expandedDirs[normalizedPath] = false
+            root.refreshView()
         }
         else {
             root._expandedDirs[normalizedPath] = true
             root.directoryExpanded(normalizedPath, isCached)
-        }
-
-        if (isCached) {
-            root.refreshView()
+            if (isCached) {
+                root.refreshView()
+            }
         }
     }
 

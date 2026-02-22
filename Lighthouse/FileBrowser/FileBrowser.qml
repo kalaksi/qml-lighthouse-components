@@ -277,7 +277,10 @@ Item {
 
         let wasCached = normalizedPath in root._cache
 
-        root._expandedDirs[normalizedPath] = true
+        // Make sure to not just mutate in place.
+        let newExpandedDirs = Object.assign({}, root._expandedDirs)
+        newExpandedDirs[normalizedPath] = true
+        root._expandedDirs = newExpandedDirs
 
         if (fileEntries !== undefined && fileEntries !== null) {
             root._cache[normalizedPath] = fileEntries
@@ -301,10 +304,11 @@ Item {
             if (root.useSplitView) {
                 dirTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
                 // Prevents unnecessary navigation to intermediate directories.
-                let atTarget = root._expandDirsToPath === "" || normalizedPath === root._expandDirsToPath
+                let atTarget = root._expandDirsToPath !== "" && normalizedPath === root._expandDirsToPath
                 if (atTarget) {
                     fileListView.rootPath = normalizedPath
                 }
+                fileListView.refreshView()
             }
             else {
                 treeView.insertDirectoryContent(normalizedPath, cachedEntries)
