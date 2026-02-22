@@ -37,6 +37,7 @@ Item {
         delegate: Rectangle {
             id: cellRoot
             required property int row
+            implicitWidth: 60
             color: root.headerColor
 
             Rectangle {
