@@ -30,11 +30,11 @@ Item {
         othersPermCombo.currentIndex >= 0
 
     readonly property string resultOwnerRwx: ownerPermCombo.currentIndex >= 0 ?
-        root._permissionOptions[ownerPermCombo.currentIndex].value : undefined
+        root._permissionOptions[ownerPermCombo.currentIndex].value : ""
     readonly property string resultGroupRwx: groupPermCombo.currentIndex >= 0 ?
-        root._permissionOptions[groupPermCombo.currentIndex].value : undefined
+        root._permissionOptions[groupPermCombo.currentIndex].value : ""
     readonly property string resultOthersRwx: othersPermCombo.currentIndex >= 0 ?
-        root._permissionOptions[othersPermCombo.currentIndex].value : undefined
+        root._permissionOptions[othersPermCombo.currentIndex].value : ""
     readonly property string resultOwner: ownerField.text.trim()
     readonly property string resultGroup: groupField.text.trim()
 

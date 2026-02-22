@@ -12,12 +12,13 @@ import QtQml.Models
 Item {
     id: root
 
-    property var columnWidthProvider: null
+    required property string directorySeparator
+    required property string rootPath
 
+    property var columnWidthProvider: null
     property int indentWidth: 20
     property int rowHeight: 28
     property int arrowWidth: 20
-    property string rootPath: "/"
     property bool hideFiles: false
     property bool hideDirectories: false
     property bool enableDirectoryNavigation: false
@@ -90,7 +91,7 @@ Item {
                 root.selectedPaths = root.getSelectedPaths()
                 if (root.enableDirectoryNavigation
                     && root.selectedPaths.length === 1
-                    && root.selectedPaths[0].endsWith("/")) {
+                    && root.selectedPaths[0].endsWith(root.directorySeparator)) {
 
                     let isCached = root._cache[root.selectedPaths[0]] !== undefined
                     root.directoryExpanded(root.selectedPaths[0], isCached)
@@ -168,7 +169,7 @@ Item {
                     Item {
                         id: arrowIndentArea
                         property int depth: root.enableDirectoryNavigation ?
-                            (viewDelegate.fullPath.split("/").length - 1) : 0
+                            (viewDelegate.fullPath.split(root.directorySeparator).length - 1) : 0
 
                         width: root.arrowWidth + (arrowIndentArea.depth * root.indentWidth)
                         height: parent.height
@@ -328,7 +329,7 @@ Item {
 
                 TableView.onCommit: {
                     let newName = text.trim()
-                    if (newName.length > 0 && newName.indexOf("/") === -1) {
+                    if (newName.length > 0 && newName.indexOf(root.directorySeparator) === -1) {
                         root.renamed(root.getPathAtRow(viewDelegate.row), newName)
                     }
                     TableView.view.closeEditor()
@@ -505,9 +506,8 @@ Item {
     }
 
     function _normalizeDirectoryPath(path) {
-        let pathStr = String(path)
-        if (!pathStr.endsWith("/") && pathStr !== "/") {
-            path = pathStr + "/"
+        if (!path.endsWith(root.directorySeparator) && path !== root.directorySeparator) {
+            path = path + root.directorySeparator
         }
         return path
     }

@@ -14,6 +14,11 @@ Item {
     width: 600
     height: 400
 
+    required property string directorySeparator
+
+    /// Has to be given if using split view with directory tree.
+    property string directoryTreeRootPath: "/"
+    property string rootPath: root.directoryTreeRootPath
     property int indentWidth: 20
     property int rowHeight: 28
     property int arrowWidth: 20
@@ -34,21 +39,21 @@ Item {
     property var dimmedPaths: []
 
     readonly property string selectedDirectory: dirTreeView && dirTreeView.selectedPaths.length > 0 ?
-        dirTreeView.selectedPaths[0] : "/"
+        dirTreeView.selectedPaths[0] : ""
 
     readonly property var selectedFiles: fileListView && fileListView.selectedPaths.length > 0 ?
         fileListView.selectedPaths : []
 
     readonly property var selectedFilesOnly: root.selectedFiles ?
-        root.selectedFiles.filter(path => !path.endsWith("/")) : []
+        root.selectedFiles.filter(path => !path.endsWith(root.directorySeparator)) : []
 
     readonly property bool hasSingleSelection: (root.useSplitView && fileListView.selectedPaths.length === 1) ||
         (!root.useSplitView && treeView.selectedPaths.length === 1)
 
     property int _maxColumns: 8
-    property string _fileListRootPath: ""
     property var _cache: ({})
     property var _expandedDirs: ({})
+    property string _expandDirsToPath: ""
 
     signal directoryExpanded(string path, bool isCached)
     signal renamed(string fullPath, string newName)
@@ -90,6 +95,8 @@ Item {
 
         FileBrowserTreeView {
             id: treeView
+            rootPath: root.rootPath
+            directorySeparator: root.directorySeparator
             width: parent.width
             height: parent.height - header.height
             indentWidth: root.indentWidth
@@ -100,7 +107,6 @@ Item {
             dimmedPaths: root.dimmedPaths
             sortColumnIndex: root.sortColumnIndex
             sortAscending: root.sortAscending
-            rootPath: "/"
             singleSelection: true
             _cache: root._cache
             _expandedDirs: root._expandedDirs
@@ -120,12 +126,10 @@ Item {
             }
 
             Component.onCompleted: {
-                Qt.callLater(function() {
-                    let tw = treeView.tableView.width
-                    for (let c = 0; c < 1 + root._maxColumns; c++) {
-                        treeView.tableView.setColumnWidth(c, root._getColumnWidth(c, tw))
-                    }
-                })
+                let tw = treeView.tableView.width
+                for (let c = 0; c < 1 + root._maxColumns; c++) {
+                    treeView.tableView.setColumnWidth(c, root._getColumnWidth(c, tw))
+                }
             }
         }
     }
@@ -147,6 +151,8 @@ Item {
 
             FileBrowserTreeView {
                 id: dirTreeView
+                rootPath: root.directoryTreeRootPath
+                directorySeparator: root.directorySeparator
                 width: parent.width
                 height: parent.height - root.rowHeight
                 indentWidth: root.indentWidth
@@ -154,13 +160,13 @@ Item {
                 arrowWidth: root.arrowWidth
                 directoryIconSource: root.directoryIconSource
                 dimmedPaths: root.dimmedPaths
-                rootPath: "/"
                 hideFiles: true
                 singleSelection: true
                 enableDirectoryNavigation: true
                 _cache: root._cache
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
+
                 columnWidthProvider: function(column, totalWidth) {
                     return column === 0 ? totalWidth : 0
                 }
@@ -186,9 +192,9 @@ Item {
                 columnHeaders: root.columnHeaders
                 headerColor: root.headerColor
                 headerBorderColor: root.headerBorderColor
-                _maxColumns: root._maxColumns
                 sortColumnIndex: root.sortColumnIndex
                 sortAscending: root.sortAscending
+                _maxColumns: root._maxColumns
 
                 onHeaderClicked: function(columnIndex) {
                     if (columnIndex === root.sortColumnIndex) {
@@ -203,6 +209,8 @@ Item {
 
             FileBrowserTreeView {
                 id: fileListView
+                rootPath: root.selectedDirectory
+                directorySeparator: root.directorySeparator
                 width: parent.width
                 height: parent.height - fileHeader.height
                 indentWidth: root.indentWidth
@@ -211,13 +219,12 @@ Item {
                 contextMenu: root.contextMenu
                 directoryIconSource: root.directoryIconSource
                 dimmedPaths: root.dimmedPaths
-                _cache: root._cache
-                _maxColumns: root._maxColumns
                 sortColumnIndex: root.sortColumnIndex
                 sortAscending: root.sortAscending
-                rootPath: root.selectedDirectory
                 hideDirectories: root.hideDirectories
                 enableDirectoryNavigation: false
+                _cache: root._cache
+                _maxColumns: root._maxColumns
 
                 onDirectoryExpanded: function(path, isCached) {
                     root.directoryExpanded(path, isCached)
@@ -243,6 +250,18 @@ Item {
                 }
             }
         }
+    }
+
+    /// Opens at the given path; initiates listing requests and expands the dir tree segment by segment.
+    function openInitialDirectory(dirPath) {
+        let normalizedPath = root._normalizeDirectoryPath(dirPath)
+
+        if (normalizedPath !== root.directoryTreeRootPath) {
+            // Expands the directory tree segment by segment until the path is reached.
+            root._expandDirsToPath = normalizedPath
+        }
+
+        root.directoryExpanded(root.directoryTreeRootPath, false)
     }
 
     function openDirectory(dirPath, fileEntries) {
@@ -281,11 +300,39 @@ Item {
         else {
             if (root.useSplitView) {
                 dirTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
-                fileListView.refreshView()
+                // Prevents unnecessary navigation to intermediate directories.
+                let atTarget = root._expandDirsToPath === "" || normalizedPath === root._expandDirsToPath
+                if (atTarget) {
+                    fileListView.rootPath = normalizedPath
+                }
             }
             else {
                 treeView.insertDirectoryContent(normalizedPath, cachedEntries)
                 treeView.rootPath = normalizedPath
+            }
+        }
+
+        // Handle expansion of the directory tree to the given path if opening directory from deeper level.
+        if (root._expandDirsToPath !== "") {
+            if (!root.useSplitView) {
+                root._expandDirsToPath = ""
+                return
+            }
+
+            if (normalizedPath === root._expandDirsToPath) {
+                dirTreeView.selectPath(normalizedPath)
+                root._expandDirsToPath = ""
+                return
+            }
+
+            let remainingPath = root._expandDirsToPath.substring(normalizedPath.length)
+            let remainingSegments = root._getPathComponents(remainingPath)
+            if (remainingSegments.length > 0) {
+                let nextPath = normalizedPath + remainingSegments[0]
+                root.directoryExpanded(nextPath, false)
+            }
+            else {
+                root._expandDirsToPath = ""
             }
         }
     }
@@ -343,10 +390,9 @@ Item {
             return null
         }
 
-        let fullPath = directory === "/" ? "/" + name : directory + name
-        let fullPathStr = String(fullPath)
-        if (fileType === "d" && !fullPathStr.endsWith("/")) {
-            fullPath = fullPathStr + "/"
+        let fullPath = root._normalizeDirectoryPath(directory) + name
+        if (fileType === "d") {
+            fullPath = root._normalizeDirectoryPath(fullPath)
         }
 
         let result = {
@@ -367,10 +413,10 @@ Item {
         return result
     }
 
+    // TODO: implement for non-unix systems.
     function _normalizeDirectoryPath(path) {
-        let pathStr = String(path)
-        if (!pathStr.endsWith("/") && pathStr !== "/") {
-            path = pathStr + "/"
+        if (!path.endsWith(root.directorySeparator) && path !== "/") {
+            path = path + root.directorySeparator
         }
         return path
     }
@@ -391,5 +437,10 @@ Item {
             return evenWidth * tableViewWidth
         }
         return 0
+    }
+
+    function _getPathComponents(fullPath) {
+        let parts = fullPath.split(root.directorySeparator).filter(p => p.length > 0)
+        return parts
     }
 }
