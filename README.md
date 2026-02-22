@@ -13,7 +13,7 @@ import Lighthouse.FilePermissionsDialog 1.0
 ## Components
 
 - **[Lighthouse.AceEditor](Lighthouse/AceEditor/README.md)** – Wrapper for the [Ace](https://ace.c9.io/) code editor (WebView-based).
-- **[Lighthouse.FileBrowser](Lighthouse/FileBrowser/README.md)** – Tree-style file browser with configurable columns.
+- **[Lighthouse.FileBrowser](Lighthouse/FileBrowser/README.md)** – Tree-style file browser with configurable columns; optional split view (directory tree + file list).
 - **[Lighthouse.FilePermissionsDialog](Lighthouse/FilePermissionsDialog/README.md)** – Dialog for editing Unix file permissions and ownership.
 
 See the `Lighthouse/` directory. Each module has its own QML files and `qmldir`.
