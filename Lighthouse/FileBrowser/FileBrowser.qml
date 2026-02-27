@@ -271,7 +271,15 @@ Item {
             && root._expandedDirs[normalizedPath] === true
             && (fileEntries === undefined || fileEntries === null)) {
 
-            // Already expanded with content, do nothing.
+            // Already expanded with content; still update selection and file list when navigating.
+            if (root.useSplitView) {
+                fileListView.rootPath = normalizedPath
+                fileListView.refreshView()
+            }
+            else {
+                treeView.rootPath = normalizedPath
+                treeView.refreshView()
+            }
             return
         }
 
@@ -304,7 +312,7 @@ Item {
             if (root.useSplitView) {
                 dirTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
                 // Prevents unnecessary navigation to intermediate directories.
-                let atTarget = root._expandDirsToPath !== "" && normalizedPath === root._expandDirsToPath
+                let atTarget = root._expandDirsToPath === "" || normalizedPath === root._expandDirsToPath
                 if (atTarget) {
                     fileListView.rootPath = normalizedPath
                 }
