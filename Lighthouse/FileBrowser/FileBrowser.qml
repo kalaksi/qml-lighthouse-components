@@ -302,6 +302,7 @@ Item {
 
         if (wasCached) {
             if (root.useSplitView) {
+                dirTreeView.refreshView()
                 fileListView.refreshView()
             }
             else {
