@@ -384,6 +384,15 @@ Item {
         }
     }
 
+    function selectFilePath(path) {
+        if (root.useSplitView) {
+            fileListView.selectPath(path)
+        }
+        else {
+            treeView.selectPath(path)
+        }
+    }
+
     function getCellValue(path, columnIndex) {
         let view = root.useSplitView ? fileListView : treeView
         for (let r = 0; r < view.tableView.model.rowCount; r++) {
