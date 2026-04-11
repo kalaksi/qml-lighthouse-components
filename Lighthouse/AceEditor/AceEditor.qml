@@ -20,6 +20,11 @@ Item {
     signal editorContentChanged(string newContent)
     signal editorReady()
 
+    // Currently only emitted in Vim mode.
+    signal writeRequested()
+    // Currently only emitted in Vim mode.
+    signal quitRequested(bool writeChanges, bool discardUnsaved, bool writeOnlyIfModified)
+
     onContentChanged: {
         root.setContent(root.content)
     }
@@ -48,13 +53,21 @@ Item {
 
         function editorReady() {
             // console.log("Editor is now ready");
-            root._editorReady = true;
+            root._editorReady = true
 
             root.setMode(root.mode)
             root.setTheme(root.theme)
             root.setContent(root.content)
 
             root.editorReady()
+        }
+
+        function writeRequested() {
+            root.writeRequested()
+        }
+
+        function quitRequested(writeChanges, discardUnsaved, writeOnlyIfModified) {
+            root.quitRequested(writeChanges, discardUnsaved, writeOnlyIfModified)
         }
     }
 
@@ -66,6 +79,18 @@ Item {
         url: Qt.resolvedUrl("ace-editor.html")
     }
 
+    function focusEditor() {
+        webView.forceActiveFocus()
+        if (!root._editorReady) {
+            return
+        }
+        webView.runJavaScript(`
+            if (window.editor && typeof window.editor.focus === 'function') {
+                window.editor.focus();
+            }
+        `)
+    }
+
     function setContent(content) {
         if (!root._editorReady) {
             return
@@ -75,6 +100,30 @@ Item {
             window.editor.setValue(${JSON.stringify(content)});
             window.editor.clearSelection();
         `)
+    }
+
+    function resetCursor() {
+        if (!root._editorReady) {
+            return false
+        }
+
+        // Move cursor to the top of the document.
+        webView.runJavaScript(`
+            (function() {
+                if (!window.editor) {
+                    return;
+                }
+                window.editor.clearSelection();
+                if (window.editor.navigateFileStart) {
+                    window.editor.navigateFileStart();
+                } else {
+                    window.editor.selection.moveTo(0, 0);
+                }
+            })();
+        `)
+
+        // Not sure if always executed in proper order.
+        focusEditor()
     }
 
     function getContent(callback) {
@@ -142,6 +191,30 @@ Item {
             else {
                 throw new Error("Editor function '${functionName}' not found");
             }
+        `)
+    }
+
+    function showVimNotification(message, textColor) {
+        if (!root._editorReady) {
+            return
+        }
+
+        let messageString = JSON.stringify(message)
+        let colorString = JSON.stringify(textColor ? textColor : "#ff6666")
+        webView.runJavaScript(`
+            (function() {
+                if (!window.editor || !window.editor.state || !window.editor.state.cm) {
+                    return;
+                }
+                var cm = window.editor.state.cm;
+                var pre = document.createElement("div");
+                pre.style.color = ` + colorString + `;
+                pre.style.whiteSpace = "pre";
+                pre.textContent = ` + messageString + `;
+                if (cm.openNotification) {
+                    cm.openNotification(pre, {bottom: true, duration: 5000});
+                }
+            })();
         `)
     }
 

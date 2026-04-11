@@ -52,7 +52,26 @@
                     window.bridge.contentChanged(window.editor.getValue());
                 });
 
-                window.bridge.editorReady();
+                ace.config.loadModule(['keybinding', 'ace/keyboard/vim'], function() {
+                    var Vim = ace.require('ace/keyboard/vim').Vim;
+
+                    Vim.defineEx('write', 'w', function() {
+                        window.bridge.writeRequested();
+                    });
+                    Vim.defineEx('quit', 'q', function(cm, params) {
+                        var rest = params.argString ? params.argString.trim() : '';
+                        var discardChanges = rest.indexOf('!') === 0;
+                        window.bridge.quitRequested(false, discardChanges, false);
+                    });
+                    Vim.defineEx('wq', 'wq', function() {
+                        window.bridge.quitRequested(true, false, false);
+                    });
+                    Vim.defineEx('x', 'x', function() {
+                        window.bridge.quitRequested(false, false, true);
+                    });
+
+                    window.bridge.editorReady();
+                });
             });
         }
 
