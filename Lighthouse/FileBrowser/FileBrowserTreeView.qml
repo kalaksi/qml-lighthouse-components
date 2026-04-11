@@ -22,6 +22,7 @@ Item {
     property bool hideFiles: false
     property bool hideDirectories: false
     property bool enableDirectoryNavigation: false
+    property bool suppressDirectoryExpandedOnSelect: false
     /// When set, used as Image source for directory rows. When empty, a generic folder symbol is shown.
     property string directoryIconSource: ""
     /// Meant for read-only access.
@@ -89,7 +90,8 @@ Item {
         selectionModel: ItemSelectionModel {
             onSelectionChanged: {
                 root.selectedPaths = root.getSelectedPaths()
-                if (root.enableDirectoryNavigation
+                if (!root.suppressDirectoryExpandedOnSelect
+                    && root.enableDirectoryNavigation
                     && root.selectedPaths.length === 1
                     && root.selectedPaths[0].endsWith(root.directorySeparator)) {
 
@@ -386,7 +388,9 @@ Item {
         root.hoveredColumn = -1
         tableModel.rows = root._buildFlatList(root.rootPath)
 
-        if (root.enableDirectoryNavigation && oldSelectedPath !== "") {
+        if (root.enableDirectoryNavigation && oldSelectedPath !== ""
+            && !root.suppressDirectoryExpandedOnSelect) {
+
             root.selectPath(oldSelectedPath)
         }
     }

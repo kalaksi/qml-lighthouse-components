@@ -50,10 +50,18 @@ Item {
     readonly property bool hasSingleSelection: (root.useSplitView && fileListView.selectedPaths.length === 1) ||
         (!root.useSplitView && treeView.selectedPaths.length === 1)
 
+    readonly property bool canNavigateBack: root._historyIndex > 0
+    readonly property bool canNavigateForward: root._historyIndex >= 0
+        && root._historyIndex < root._historyPaths.length - 1
+
     property int _maxColumns: 8
     property var _cache: ({})
     property var _expandedDirs: ({})
     property string _expandDirsToPath: ""
+    property var _historyPaths: []
+    property int _historyIndex: -1
+    // -1 = going back, 1 = going forward, 0 = not a history navigation
+    property int _pendingHistoryDirection: 0
 
     signal directoryExpanded(string path, bool isCached)
     signal renamed(string fullPath, string newName)
@@ -63,6 +71,23 @@ Item {
             console.error("FileBrowser: too many columns, maximum allowed is " + root._maxColumns + ".")
             root.columnHeaders = root.columnHeaders.slice(0, root._maxColumns)
         }
+    }
+
+    onSelectedDirectoryChanged: {
+        let path = root.selectedDirectory
+        if (path === "") {
+            return
+        }
+        if (root._expandDirsToPath !== "") {
+            return
+        }
+        // Skip if this is the result of a history navigation we already recorded.
+        if (root._historyIndex >= 0 && root._historyPaths[root._historyIndex] === path) {
+            root._pendingHistoryDirection = 0
+            return
+        }
+        root._historyPaths = root._historyPaths.slice(0, root._historyIndex + 1).concat([path])
+        root._historyIndex = root._historyPaths.length - 1
     }
 
     Column {
@@ -252,6 +277,19 @@ Item {
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.BackButton | Qt.ForwardButton
+        onClicked: function(mouse) {
+            if (mouse.button === Qt.BackButton) {
+                root.navigateBack()
+            }
+            else if (mouse.button === Qt.ForwardButton) {
+                root.navigateForward()
+            }
+        }
+    }
+
     /// Opens at the given path; initiates listing requests and expands the dir tree segment by segment.
     function openInitialDirectory(dirPath) {
         let normalizedPath = root._normalizeDirectoryPath(dirPath)
@@ -269,7 +307,8 @@ Item {
 
         if (normalizedPath in root._expandedDirs
             && root._expandedDirs[normalizedPath] === true
-            && (fileEntries === undefined || fileEntries === null)) {
+            && (fileEntries === undefined || fileEntries === null)
+            && root._expandDirsToPath === "") {
 
             // Already expanded with content; still update selection and file list when navigating.
             if (root.useSplitView) {
@@ -302,7 +341,12 @@ Item {
 
         if (wasCached) {
             if (root.useSplitView) {
+                let suppress = root._expandDirsToPath !== ""
+                if (suppress) {
+                    dirTreeView.suppressDirectoryExpandedOnSelect = true
+                }
                 dirTreeView.refreshView()
+                dirTreeView.suppressDirectoryExpandedOnSelect = false
                 fileListView.refreshView()
             }
             else {
@@ -333,16 +377,16 @@ Item {
             }
 
             if (normalizedPath === root._expandDirsToPath) {
-                dirTreeView.selectPath(normalizedPath)
                 root._expandDirsToPath = ""
+                dirTreeView.selectPath(normalizedPath)
                 return
             }
 
             let remainingPath = root._expandDirsToPath.substring(normalizedPath.length)
             let remainingSegments = root._getPathComponents(remainingPath)
             if (remainingSegments.length > 0) {
-                let nextPath = normalizedPath + remainingSegments[0]
-                root.directoryExpanded(nextPath, false)
+                let nextPath = root._normalizeDirectoryPath(normalizedPath + remainingSegments[0])
+                root.directoryExpanded(nextPath, root._cache[nextPath] !== undefined)
             }
             else {
                 root._expandDirsToPath = ""
@@ -464,5 +508,52 @@ Item {
     function _getPathComponents(fullPath) {
         let parts = fullPath.split(root.directorySeparator).filter(p => p.length > 0)
         return parts
+    }
+
+    /// Called by the parent when a directory listing failed for the given path.
+    /// Returns true if the error was handled as a history navigation (caller should not log it).
+    function navigationError(path) {
+        if (root._pendingHistoryDirection === 0) {
+            return false
+        }
+        root._historyPaths = root._historyPaths.filter((_, i) => i !== root._historyIndex)
+        if (root._pendingHistoryDirection > 0) {
+            root._historyIndex -= 1
+        }
+        root._historyIndex = Math.max(-1, Math.min(root._historyIndex, root._historyPaths.length - 1))
+        let direction = root._pendingHistoryDirection
+        root._pendingHistoryDirection = 0
+        if (direction < 0) {
+            root.navigateBack()
+        }
+        else {
+            root.navigateForward()
+        }
+        return true
+    }
+
+    function navigateBack() {
+        if (root._historyIndex <= 0) {
+            return
+        }
+        root._historyIndex -= 1
+        root._pendingHistoryDirection = -1
+        root.navigateToDirectory(root._historyPaths[root._historyIndex])
+    }
+
+    function navigateForward() {
+        if (root._historyIndex >= root._historyPaths.length - 1) {
+            return
+        }
+        root._historyIndex += 1
+        root._pendingHistoryDirection = 1
+        root.navigateToDirectory(root._historyPaths[root._historyIndex])
+    }
+
+    function navigateToDirectory(dirPath) {
+        let normalizedPath = root._normalizeDirectoryPath(dirPath)
+        root._expandDirsToPath = normalizedPath
+        let isCached = root._cache[root.directoryTreeRootPath] !== undefined
+        root.directoryExpanded(root.directoryTreeRootPath, isCached)
     }
 }
