@@ -70,7 +70,27 @@
                         window.bridge.quitRequested(false, false, true);
                     });
 
-                    window.bridge.editorReady();
+                    ace.config.loadModule(['keybinding', 'ace/keyboard/emacs'], function() {
+                        var emacsHandler = ace.require('ace/keyboard/emacs').handler;
+                        emacsHandler.addCommands({
+                            lkWrite: {
+                                exec: function() {
+                                    window.bridge.writeRequested();
+                                },
+                                readOnly: true
+                            },
+                            lkQuit: {
+                                exec: function() {
+                                    window.bridge.quitRequested(false, false, false);
+                                },
+                                readOnly: true
+                            }
+                        });
+                        emacsHandler.bindKey('C-x C-s', 'lkWrite');
+                        emacsHandler.bindKey('C-x C-c', 'lkQuit');
+
+                        window.bridge.editorReady();
+                    });
                 });
             });
         }

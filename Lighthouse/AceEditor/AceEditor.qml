@@ -20,9 +20,9 @@ Item {
     signal editorContentChanged(string newContent)
     signal editorReady()
 
-    // Currently only emitted in Vim mode.
+    // Emitted from Vim ex-commands and Emacs C-x C-s.
     signal writeRequested()
-    // Currently only emitted in Vim mode.
+    // Emitted from Vim ex-commands and Emacs C-x C-c.
     signal quitRequested(bool writeChanges, bool discardUnsaved, bool writeOnlyIfModified)
 
     onContentChanged: {

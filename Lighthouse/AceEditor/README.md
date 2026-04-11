@@ -53,8 +53,8 @@ AceEditor {
 
 - **`editorContentChanged(string newContent)`** - Emitted when the editor content changes
 - **`editorReady()`** - Emitted when the editor is fully initialized and ready to use
-- **`writeRequested()`** - Emitted when user runs Vim command for writing the file.
-- **`quitRequested(bool writeChanges, bool discardUnsaved, bool writeOnlyIfModified)`** - Emitted when user runs Vim command for exiting the editor. Parameters tell how exiting should be handled.
+- **`writeRequested()`** - Emitted when user runs Vim or Emacs command for writing the file.
+- **`quitRequested(bool writeChanges, bool discardUnsaved, bool writeOnlyIfModified)`** - Emitted when user runs Vim or Emacs command for exiting the editor. Parameters tell how exiting should be handled.
 
 ### Functions
 
