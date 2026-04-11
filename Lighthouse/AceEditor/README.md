@@ -53,6 +53,8 @@ AceEditor {
 
 - **`editorContentChanged(string newContent)`** - Emitted when the editor content changes
 - **`editorReady()`** - Emitted when the editor is fully initialized and ready to use
+- **`writeRequested()`** - Emitted when user runs Vim command for writing the file.
+- **`quitRequested(bool writeChanges, bool discardUnsaved, bool writeOnlyIfModified)`** - Emitted when user runs Vim command for exiting the editor. Parameters tell how exiting should be handled.
 
 ### Functions
 
@@ -64,7 +66,10 @@ AceEditor {
 - **`getEditorOption(string optionName)`** - Get an Ace editor option
 - **`setRendererOption(string optionName, var value)`** - Set an Ace renderer option
 - **`getRendererOption(string optionName)`** - Get an Ace renderer option
-- **`callEditorFunction(string functionName, ...args)`** - Call any Ace editor function
+- **`callEditorFunction(string functionName, ...args)`** - Call any Ace editor function (e.g. `callEditorFunction("setKeyboardHandler", "ace/keyboard/vim")`)
+- **`focusEditor()`**
+- **`resetCursor()`**
+- **`showVimNotification(string message, color textColor)`** - Show a short CodeMirror notification at the bottom of the editor (for Vim-style feedback). Only works with Vim mode.
 
 ### Example: Setting Editor Options
 
