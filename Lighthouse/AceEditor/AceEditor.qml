@@ -15,6 +15,7 @@ Item {
     property string mode: "text"
     property string theme: ""
     property color defaultBackgroundColor: "transparent"
+    property bool wordWrap: true
     property bool _editorReady: false
 
     signal editorContentChanged(string newContent)
@@ -37,6 +38,13 @@ Item {
         root.setTheme(root.theme)
     }
 
+    onWordWrapChanged: {
+        if (root._editorReady) {
+            root.setEditorOption("wrap", root.wordWrap)
+        }
+    }
+
+    onEditorReady: root.setEditorOption("wrap", root.wordWrap)
 
     WebChannel {
         id: channel
