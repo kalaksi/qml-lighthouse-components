@@ -43,6 +43,9 @@ Item {
     property int hoveredRow: -1
     property int hoveredColumn: -1
 
+    /// null: default ScrollBar; else Component.createObject(tableView) for ScrollBar.vertical.
+    property Component verticalScrollBar: null
+
     signal directoryExpanded(string path, bool is_cached)
     signal directoryActivated(string path)
     signal selectionChanged(var paths)
@@ -56,6 +59,13 @@ Item {
     onHideFilesChanged: refreshView()
     onSortColumnIndexChanged: refreshView()
     onSortAscendingChanged: refreshView()
+
+    Component {
+        id: defaultVerticalScrollBar
+        ScrollBar {
+            active: true
+        }
+    }
 
     TableView {
         id: tableView
@@ -102,8 +112,11 @@ Item {
             }
         }
 
-        ScrollBar.vertical: ScrollBar {
-            active: true
+        Component.onCompleted: {
+            let customComp = root.verticalScrollBar
+            let comp = customComp !== null ? customComp : defaultVerticalScrollBar
+            let bar = comp.createObject(tableView)
+            tableView.ScrollBar.vertical = bar
         }
 
         delegate: TableViewDelegate {

@@ -67,6 +67,7 @@ Item {
 | `hideDirectories` | `bool` | `false` | Hide directories in the file list (split view). |
 | `directoryIconSource` | `string` | `""` | Icon for directory rows; empty uses default. |
 | `dimmedPaths` | `var` (array) | `[]` | Paths shown with reduced opacity. |
+| `verticalScrollBar` | `Component` | `null` | Optional vertical scrollbar for all tree views (single and split). |
 | `selectedDirectory` | `string` (read-only) | | Currently selected directory path in the tree (split view). |
 | `selectedFiles` | `var` (read-only) | | Currently selected file paths in the file list. |
 
