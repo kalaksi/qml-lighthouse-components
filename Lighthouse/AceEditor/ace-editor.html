@@ -19,6 +19,33 @@
             left: 0;
             background: transparent;
         }
+
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-v,
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-h {
+            color-scheme: dark;
+        }
+
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-v::-webkit-scrollbar,
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-h::-webkit-scrollbar {
+            width: var(--lk-scrollbar-size, 10px);
+            height: var(--lk-scrollbar-size, 10px);
+        }
+
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-v::-webkit-scrollbar-track,
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-h::-webkit-scrollbar-track {
+            background: var(--lk-scrollbar-track, #1d1f21);
+        }
+
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-v::-webkit-scrollbar-thumb,
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-h::-webkit-scrollbar-thumb {
+            background: var(--lk-scrollbar-thumb, #4b4e55);
+            border-radius: var(--lk-scrollbar-radius, 4px);
+        }
+
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-v::-webkit-scrollbar-thumb:hover,
+        html.lk-ace-scrollbar-custom .ace_editor .ace_scrollbar-h::-webkit-scrollbar-thumb:hover {
+            background: var(--lk-scrollbar-thumb-hover, #5a5d65);
+        }
     </style>
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>

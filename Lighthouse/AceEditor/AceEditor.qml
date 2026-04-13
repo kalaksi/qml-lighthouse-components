@@ -15,6 +15,12 @@ Item {
     property string mode: "text"
     property string theme: ""
     property color defaultBackgroundColor: "transparent"
+    property bool customScrollbarStyling: false
+    property color scrollbarTrackColor: "#1d1f21"
+    property color scrollbarThumbColor: "#4b4e55"
+    property color scrollbarThumbHoverColor: "#5a5d65"
+    property int scrollbarSize: 10
+    property int scrollbarRadius: 4
     property bool wordWrap: true
     property bool _editorReady: false
 
@@ -44,6 +50,42 @@ Item {
         }
     }
 
+    onCustomScrollbarStylingChanged: {
+        if (root._editorReady) {
+            root.applyScrollbarStyling()
+        }
+    }
+
+    onScrollbarTrackColorChanged: {
+        if (root._editorReady) {
+            root.applyScrollbarStyling()
+        }
+    }
+
+    onScrollbarThumbColorChanged: {
+        if (root._editorReady) {
+            root.applyScrollbarStyling()
+        }
+    }
+
+    onScrollbarThumbHoverColorChanged: {
+        if (root._editorReady) {
+            root.applyScrollbarStyling()
+        }
+    }
+
+    onScrollbarSizeChanged: {
+        if (root._editorReady) {
+            root.applyScrollbarStyling()
+        }
+    }
+
+    onScrollbarRadiusChanged: {
+        if (root._editorReady) {
+            root.applyScrollbarStyling()
+        }
+    }
+
     onEditorReady: root.setEditorOption("wrap", root.wordWrap)
 
     WebChannel {
@@ -67,6 +109,7 @@ Item {
             root.setTheme(root.theme)
             root.setContent(root.content)
 
+            root.applyScrollbarStyling()
             root.editorReady()
         }
 
@@ -85,6 +128,39 @@ Item {
         backgroundColor: root.defaultBackgroundColor
         webChannel: channel
         url: Qt.resolvedUrl("ace-editor.html")
+    }
+
+    function colorToCssHex(c) {
+        let s = c.toString()
+        if (s.length === 9 && s.startsWith("#")) {
+            return "#" + s.substring(3)
+        }
+        return s
+    }
+
+    function applyScrollbarStyling() {
+        if (!root._editorReady) {
+            return
+        }
+        if (!root.customScrollbarStyling) {
+            webView.runJavaScript(
+                "(function(){document.documentElement.classList.remove(\"lk-ace-scrollbar-custom\");})();"
+            )
+            return
+        }
+        let track = JSON.stringify(colorToCssHex(root.scrollbarTrackColor))
+        let thumb = JSON.stringify(colorToCssHex(root.scrollbarThumbColor))
+        let thumbHover = JSON.stringify(colorToCssHex(root.scrollbarThumbHoverColor))
+        let size = JSON.stringify(root.scrollbarSize + "px")
+        let radius = JSON.stringify(root.scrollbarRadius + "px")
+        webView.runJavaScript(
+            "(function(){var e=document.documentElement;e.classList.add(\"lk-ace-scrollbar-custom\");"
+                + "e.style.setProperty(\"--lk-scrollbar-track\"," + track + ");"
+                + "e.style.setProperty(\"--lk-scrollbar-thumb\"," + thumb + ");"
+                + "e.style.setProperty(\"--lk-scrollbar-thumb-hover\"," + thumbHover + ");"
+                + "e.style.setProperty(\"--lk-scrollbar-size\"," + size + ");"
+                + "e.style.setProperty(\"--lk-scrollbar-radius\"," + radius + ");})();"
+        )
     }
 
     function focusEditor() {
