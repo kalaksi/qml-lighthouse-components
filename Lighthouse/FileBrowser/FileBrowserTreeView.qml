@@ -6,6 +6,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import Qt.labs.qmlmodels
 import QtQml.Models
 
@@ -30,6 +31,10 @@ Item {
     property bool singleSelection: false
     /// Paths to show with reduced opacity (e.g. rows marked for move).
     property var dimmedPaths: []
+    /// Case-insensitive substring filter on entry names; empty shows all entries.
+    property string nameFilter: ""
+    /// Shows the filter bar at the bottom; clears the filter when hidden.
+    property bool showFilterBar: false
 
     property var _cache: ({})
     property var _expandedDirs: ({})
@@ -59,6 +64,23 @@ Item {
     onHideFilesChanged: refreshView()
     onSortColumnIndexChanged: refreshView()
     onSortAscendingChanged: refreshView()
+    onNameFilterChanged: refreshView()
+
+    readonly property real filterBarHeight: root.rowHeight + 12
+    property real filterBarOffset: root.showFilterBar ? 0 : filterBarHeight
+
+    Behavior on filterBarOffset {
+        NumberAnimation {
+            id: filterBarSlide
+            duration: 200
+            easing.type: Easing.OutCubic
+            onRunningChanged: {
+                if (!running && !root.showFilterBar) {
+                    root.releaseFilterFocus()
+                }
+            }
+        }
+    }
 
     Component {
         id: defaultVerticalScrollBar
@@ -70,6 +92,7 @@ Item {
     TableView {
         id: tableView
         anchors.fill: parent
+        focus: true
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         onWidthChanged: forceLayout()
@@ -279,6 +302,7 @@ Item {
                             if (root.contextMenu) root.contextMenu.popup()
                             return
                         }
+                        tableView.forceActiveFocus()
                         let rowIndex = tableView.model.index(viewDelegate.row, 0)
                         if (root.singleSelection) {
                             tableView.selectionModel.select(
@@ -372,6 +396,78 @@ Item {
             acceptedButtons: Qt.RightButton
             onClicked: if (root.contextMenu) root.contextMenu.popup()
         }
+    }
+
+    Item {
+        id: filterBarHost
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: root.filterBarHeight
+        clip: true
+        visible: root.showFilterBar || filterBarSlide.running
+        z: 1
+
+        Rectangle {
+            id: filterBar
+            width: parent.width
+            height: root.filterBarHeight
+            y: root.filterBarOffset
+            color: palette.base
+            border.width: 1
+            border.color: palette.mid
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 5
+                spacing: 4
+
+                TextField {
+                    id: filterField
+                    placeholderText: "Filter"
+                    Layout.fillWidth: true
+                    text: root.nameFilter
+                    onTextChanged: root.nameFilter = text
+
+                    // Claim Escape so window-level Esc shortcuts don't swallow it before onEscapePressed.
+                    Keys.onShortcutOverride: function(event) {
+                        if (event.key === Qt.Key_Escape) {
+                            event.accepted = true
+                        }
+                    }
+
+                    Keys.onEscapePressed: function(event) {
+                        root.showFilterBar = false
+                        event.accepted = true
+                    }
+                }
+
+                ToolButton {
+                    flat: true
+                    display: AbstractButton.IconOnly
+                    icon.name: "window-close"
+                    onClicked: root.showFilterBar = false
+                }
+            }
+        }
+    }
+
+    function releaseFilterFocus() {
+        root.nameFilter = ""
+        filterField.focus = false
+        Qt.callLater(function() {
+            tableView.forceActiveFocus()
+        })
+    }
+
+    function focusFilterField() {
+        if (!root.showFilterBar) {
+            return
+        }
+        Qt.callLater(function() {
+            filterField.selectAll()
+            filterField.forceActiveFocus()
+        })
     }
 
     function startRename() {
@@ -490,6 +586,9 @@ Item {
             if (root.hideDirectories && entry.fileType === "d") {
                 continue
             }
+            if (!root._entryMatchesNameFilter(entry)) {
+                continue
+            }
 
             tableModel.insertRow(rowIndex + i, entry)
         }
@@ -525,6 +624,9 @@ Item {
             if (root.hideDirectories && entry.fileType === "d") {
                 continue
             }
+            if (!root._entryMatchesNameFilter(entry)) {
+                continue
+            }
 
             result.push(entry)
 
@@ -543,6 +645,13 @@ Item {
             path = path + root.directorySeparator
         }
         return path
+    }
+
+    function _entryMatchesNameFilter(entry) {
+        if (root.nameFilter === "") {
+            return true
+        }
+        return entry.name.toLowerCase().includes(root.nameFilter.toLowerCase())
     }
 }
 

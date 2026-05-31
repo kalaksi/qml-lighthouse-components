@@ -31,12 +31,15 @@ Item {
     property bool sortAscending: true
     property Menu contextMenu: null
     property bool useSplitView: false
+    /// Space beside the directory tree so the split handle does not overlap its scrollbar.
+    property int splitHandleGap: 4
     /// Hide directories in the file list.
     property bool hideDirectories: false
     /// When set, used as directory icon in tree views. When empty, a generic folder symbol is shown.
     property string directoryIconSource: ""
     /// Paths to show with reduced opacity (e.g. rows marked for move).
     property var dimmedPaths: []
+    property bool enableShortcuts: false
 
     /// When null, default platform ScrollBar; else used for every tree view (single and split).
     property Component verticalScrollBar: null
@@ -169,21 +172,20 @@ Item {
         orientation: Qt.Horizontal
         visible: root.useSplitView
 
-        Column {
+        Item {
             SplitView.preferredWidth: parent.width * 0.25
             SplitView.minimumWidth: 100
-
-            Item {
-                width: parent.width
-                height: root.rowHeight
-            }
 
             FileBrowserTreeView {
                 id: dirTreeView
                 rootPath: root.directoryTreeRootPath
                 directorySeparator: root.directorySeparator
-                width: parent.width
-                height: parent.height - root.rowHeight
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.rightMargin: root.splitHandleGap
+                anchors.top: parent.top
+                anchors.topMargin: root.rowHeight
+                anchors.bottom: parent.bottom
                 indentWidth: root.indentWidth
                 rowHeight: root.rowHeight
                 arrowWidth: root.arrowWidth
@@ -281,6 +283,20 @@ Item {
                 }
             }
         }
+    }
+
+    Action {
+        id: openFileFilter
+        enabled: root.enableShortcuts && root.useSplitView
+        shortcut: StandardKey.Find
+        onTriggered: root.openFilterBar()
+    }
+
+    Action {
+        id: closeFileFilter
+        enabled: root.enableShortcuts && root.useSplitView && fileListView.showFilterBar
+        shortcut: StandardKey.Cancel
+        onTriggered: root.closeFilterBar()
     }
 
     MouseArea {
@@ -408,6 +424,15 @@ Item {
         else {
             treeView.refreshView()
         }
+    }
+
+    function openFilterBar() {
+        fileListView.showFilterBar = true
+        fileListView.focusFilterField()
+    }
+
+    function closeFilterBar() {
+        fileListView.showFilterBar = false
     }
 
     function toggleDirectory(normalizedPath) {
