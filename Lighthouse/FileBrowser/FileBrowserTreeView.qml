@@ -516,7 +516,9 @@ Item {
 
         if (isCurrentlyExpanded) {
             root._expandedDirs[normalizedPath] = false
+            root.suppressDirectoryExpandedOnSelect = true
             root.refreshView()
+            root.suppressDirectoryExpandedOnSelect = false
         }
         else {
             root._expandedDirs[normalizedPath] = true
