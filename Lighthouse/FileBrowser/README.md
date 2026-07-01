@@ -121,13 +121,16 @@ Emitted when a directory is expanded (e.g. by clicking the arrow or selecting th
 - **path**: The directory path that was expanded.
 - **isCached**: Whether the directory data is already cached.
 
-#### `renamed(string fullPath, string newName, string newFullPath)`
+#### `renamed(string fullPath, string newName)`
 
-Emitted after a successful rename in the UI.
+Emitted after a rename is committed in the UI.
 
 - **fullPath**: The entry's original full path.
 - **newName**: The new name entered by the user.
-- **newFullPath**: The entry's full path after the rename (keeps the trailing separator for directories).
+
+**Contract:** the handler must apply the rename and then trigger a refresh (re-list the
+directory and call `openDirectory()`/`refreshView()`). The renamed entry is then automatically
+re-selected, and scrolled into view, on the next refresh that contains it.
 
 ## Limitations
 

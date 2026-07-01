@@ -47,6 +47,8 @@ Item {
     property var _hoveredRows: []
     property int hoveredRow: -1
     property int hoveredColumn: -1
+    // Path to re-select after the next model rebuild (e.g. a renamed entry).
+    property string _pendingSelectPath: ""
 
     /// null: default ScrollBar; else Component.createObject(tableView) for ScrollBar.vertical.
     property Component verticalScrollBar: null
@@ -54,7 +56,9 @@ Item {
     signal directoryExpanded(string path, bool is_cached)
     signal directoryActivated(string path)
     signal selectionChanged(var paths)
-    signal renamed(string fullPath, string newName, string newFullPath)
+    // Handler must do the rename and then call refreshView() to re-list the directory.
+    // The renamed entry is then automatically re-selected and scrolled into view.
+    signal renamed(string fullPath, string newName)
 
     property alias tableView: tableView
     property Menu contextMenu: null
@@ -377,8 +381,9 @@ Item {
                         let isDir = oldFullPath.endsWith(root.directorySeparator)
                         let trimmed = isDir ? oldFullPath.slice(0, -1) : oldFullPath
                         let parentDir = trimmed.substring(0, trimmed.lastIndexOf(root.directorySeparator) + 1)
-                        let newFullPath = parentDir + newName + (isDir ? root.directorySeparator : "")
-                        root.renamed(oldFullPath, newName, newFullPath)
+                        // Re-select the renamed entry on the refresh the handler is expected to trigger.
+                        root._pendingSelectPath = parentDir + newName + (isDir ? root.directorySeparator : "")
+                        root.renamed(oldFullPath, newName)
                     }
                     TableView.view.closeEditor()
                 }
@@ -507,6 +512,22 @@ Item {
             && !root.suppressDirectoryExpandedOnSelect) {
 
             root.selectPath(oldSelectedPath)
+        }
+
+        // Re-select a pending path (e.g. a renamed entry) once it appears in the rebuilt list.
+        // Deferred because a single refresh can rebuild this view several times synchronously
+        // (the directory tree's selectionChanged re-triggers refreshView), and a synchronous
+        // select here would be cleared by a later rebuild. Running after the cascade settles,
+        // the guard makes repeated scheduling idempotent (later runs find nothing pending) and
+        // selectPath() is a no-op for an absent path, so a failed rename clears harmlessly.
+        if (root._pendingSelectPath !== "") {
+            Qt.callLater(() => {
+                if (root._pendingSelectPath === "") {
+                    return
+                }
+                root.selectPath(root._pendingSelectPath)
+                root._pendingSelectPath = ""
+            })
         }
     }
 

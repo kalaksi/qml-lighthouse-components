@@ -70,7 +70,10 @@ Item {
     property int _pendingHistoryDirection: 0
 
     signal directoryExpanded(string path, bool isCached)
-    signal renamed(string fullPath, string newName, string newFullPath)
+    // Contract: the handler must apply the rename and then trigger a refresh (re-list the
+    // directory and call openDirectory()/refreshView()). The renamed entry is then
+    // automatically re-selected, and scrolled into view, on the next refresh that contains it.
+    signal renamed(string fullPath, string newName)
 
     onColumnHeadersChanged: {
         if (root.columnHeaders.length > root._maxColumns) {
@@ -153,8 +156,8 @@ Item {
                 root.directoryExpanded(path, isCached)
             }
 
-            onRenamed: function(fullPath, newName, newFullPath) {
-                root.renamed(fullPath, newName, newFullPath)
+            onRenamed: function(fullPath, newName) {
+                root.renamed(fullPath, newName)
             }
 
             Component.onCompleted: {
@@ -269,8 +272,8 @@ Item {
                     dirTreeView.selectPath(path)
                 }
 
-                onRenamed: function(fullPath, newName, newFullPath) {
-                    root.renamed(fullPath, newName, newFullPath)
+                onRenamed: function(fullPath, newName) {
+                    root.renamed(fullPath, newName)
                 }
 
                 Component.onCompleted: {
