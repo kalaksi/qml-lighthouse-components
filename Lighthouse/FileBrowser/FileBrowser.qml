@@ -70,7 +70,7 @@ Item {
     property int _pendingHistoryDirection: 0
 
     signal directoryExpanded(string path, bool isCached)
-    signal renamed(string fullPath, string newName)
+    signal renamed(string fullPath, string newName, string newFullPath)
 
     onColumnHeadersChanged: {
         if (root.columnHeaders.length > root._maxColumns) {
@@ -153,8 +153,8 @@ Item {
                 root.directoryExpanded(path, isCached)
             }
 
-            onRenamed: function(fullPath, newName) {
-                root.renamed(fullPath, newName)
+            onRenamed: function(fullPath, newName, newFullPath) {
+                root.renamed(fullPath, newName, newFullPath)
             }
 
             Component.onCompleted: {
@@ -269,8 +269,8 @@ Item {
                     dirTreeView.selectPath(path)
                 }
 
-                onRenamed: function(fullPath, newName) {
-                    root.renamed(fullPath, newName)
+                onRenamed: function(fullPath, newName, newFullPath) {
+                    root.renamed(fullPath, newName, newFullPath)
                 }
 
                 Component.onCompleted: {

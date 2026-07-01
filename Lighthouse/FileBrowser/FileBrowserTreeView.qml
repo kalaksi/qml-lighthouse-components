@@ -54,7 +54,7 @@ Item {
     signal directoryExpanded(string path, bool is_cached)
     signal directoryActivated(string path)
     signal selectionChanged(var paths)
-    signal renamed(string fullPath, string newName)
+    signal renamed(string fullPath, string newName, string newFullPath)
 
     property alias tableView: tableView
     property Menu contextMenu: null
@@ -372,7 +372,13 @@ Item {
                 TableView.onCommit: {
                     let newName = text.trim()
                     if (newName.length > 0 && newName.indexOf(root.directorySeparator) === -1) {
-                        root.renamed(root.getPathAtRow(viewDelegate.row), newName)
+                        let oldFullPath = root.getPathAtRow(viewDelegate.row)
+                        // Preserve the trailing separator that marks directory paths.
+                        let isDir = oldFullPath.endsWith(root.directorySeparator)
+                        let trimmed = isDir ? oldFullPath.slice(0, -1) : oldFullPath
+                        let parentDir = trimmed.substring(0, trimmed.lastIndexOf(root.directorySeparator) + 1)
+                        let newFullPath = parentDir + newName + (isDir ? root.directorySeparator : "")
+                        root.renamed(oldFullPath, newName, newFullPath)
                     }
                     TableView.view.closeEditor()
                 }
@@ -550,6 +556,8 @@ Item {
                     tableView.model.index(r, 0),
                     ItemSelectionModel.ClearAndSelect | ItemSelectionModel.Current | ItemSelectionModel.Rows
                 )
+                // Scroll the row into view only when it is not already visible.
+                tableView.positionViewAtRow(r, TableView.Contain)
                 return
             }
         }
