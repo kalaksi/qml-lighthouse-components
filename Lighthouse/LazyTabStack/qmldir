@@ -1,0 +1,3 @@
+module Lighthouse.LazyTabStack
+depends Lighthouse.LazyContent 1.0
+LazyTabStack 1.0 LazyTabStack.qml
