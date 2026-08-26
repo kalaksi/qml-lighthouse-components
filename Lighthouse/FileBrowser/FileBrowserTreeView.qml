@@ -254,17 +254,22 @@ Item {
 
                     Label {
                         id: nameLabel
-                        width: parent.width - arrowIndentArea.width - directoryIconButton.width - parent.spacing
+                        width: parent.width - arrowIndentArea.width - parent.spacing
+                            - (directoryIconButton.visible ? directoryIconButton.width + parent.spacing : 0)
                         height: parent.height
                         text: viewDelegate.name
                         elide: Text.ElideRight
                         color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
                         verticalAlignment: Text.AlignVCenter
 
-                        ToolTip.visible: viewDelegate.column === 0
-                            && root.hoveredRow === viewDelegate.row
-                            && root.hoveredColumn === viewDelegate.column
-                            && nameLabel.truncated
+                        MouseArea {
+                            id: nameHoverArea
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            hoverEnabled: true
+                        }
+
+                        ToolTip.visible: nameHoverArea.containsMouse && nameLabel.truncated
                         ToolTip.text: viewDelegate.name
                     }
                 }
