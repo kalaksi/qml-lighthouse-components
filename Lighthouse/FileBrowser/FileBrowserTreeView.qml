@@ -54,6 +54,8 @@ Item {
     property Component verticalScrollBar: null
 
     signal directoryExpanded(string path, bool is_cached)
+    /// Emitted immediately before directoryExpanded when expansion was caused by row selection.
+    signal fileListNavigationRequested(string path)
     signal directoryActivated(string path)
     signal selectionChanged(var paths)
     // Handler must do the rename and then call refreshView() to re-list the directory.
@@ -133,6 +135,7 @@ Item {
                     && root.selectedPaths[0].endsWith(root.directorySeparator)) {
 
                     let isCached = root._cache[root.selectedPaths[0]] !== undefined
+                    root.fileListNavigationRequested(root.selectedPaths[0])
                     root.directoryExpanded(root.selectedPaths[0], isCached)
                 }
                 root.selectionChanged(root.selectedPaths)

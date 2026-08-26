@@ -68,6 +68,8 @@ Item {
     property int _historyIndex: -1
     // -1 = going back, 1 = going forward, 0 = not a history navigation
     property int _pendingHistoryDirection: 0
+    // Directory whose next successful response should update the split-view file list.
+    property string _pendingFileListPath: ""
 
     signal directoryExpanded(string path, bool isCached)
     // Contract: the handler must apply the rename and then trigger a refresh (re-list the
@@ -227,6 +229,10 @@ Item {
                     root.directoryExpanded(path, isCached)
                 }
 
+                onFileListNavigationRequested: function(path) {
+                    root._pendingFileListPath = path
+                }
+
                 onSelectionChanged: function(_paths) {
                     fileListView.refreshView()
                 }
@@ -285,8 +291,13 @@ Item {
 
                 onDirectoryActivated: function(path) {
                     let isCached = root._cache[path] !== undefined
+                    root._pendingFileListPath = path
+                    // This request already drives navigation; selecting the matching tree
+                    // row must not emit a duplicate directoryExpanded request.
+                    dirTreeView.suppressDirectoryExpandedOnSelect = true
                     root.directoryExpanded(path, isCached)
                     dirTreeView.selectPath(path)
+                    dirTreeView.suppressDirectoryExpandedOnSelect = false
                 }
 
                 onRenamed: function(fullPath, newName) {
@@ -335,13 +346,23 @@ Item {
     /// Opens at the given path; initiates listing requests and expands the dir tree segment by segment.
     function openInitialDirectory(dirPath) {
         let normalizedPath = root._normalizeDirectoryPath(dirPath)
-
-        if (normalizedPath !== root.directoryTreeRootPath) {
-            // Expands the directory tree segment by segment until the path is reached.
-            root._expandDirsToPath = normalizedPath
-        }
+        root._pendingFileListPath = normalizedPath
+        // Expands the directory tree segment by segment until the path is reached.
+        // Keeping the root itself as a target also ensures its file list is initially populated.
+        root._expandDirsToPath = normalizedPath
 
         root.directoryExpanded(root.directoryTreeRootPath, false)
+    }
+
+    /// Updates the file list only for the response matching the latest navigation request.
+    /// Arrow-only expansion never sets this target, so it only affects the directory tree.
+    function _navigateFileListIfRequested(normalizedPath) {
+        if (!root.useSplitView || normalizedPath !== root._pendingFileListPath) {
+            return
+        }
+        root._pendingFileListPath = ""
+        fileListView.rootPath = normalizedPath
+        fileListView.refreshView()
     }
 
     function openDirectory(dirPath, fileEntries) {
@@ -352,10 +373,10 @@ Item {
             && (fileEntries === undefined || fileEntries === null)
             && root._expandDirsToPath === "") {
 
-            // Already expanded with content; still update selection and file list when navigating.
+            // Already expanded with content; update file list only when this is navigation
+            // (row select), not expand-only via the arrow.
             if (root.useSplitView) {
-                fileListView.rootPath = normalizedPath
-                fileListView.refreshView()
+                root._navigateFileListIfRequested(normalizedPath)
             }
             else {
                 treeView.rootPath = normalizedPath
@@ -383,13 +404,12 @@ Item {
 
         if (wasCached) {
             if (root.useSplitView) {
-                let suppress = root._expandDirsToPath !== ""
-                if (suppress) {
+                let wasSuppressingSelection = dirTreeView.suppressDirectoryExpandedOnSelect
+                if (root._expandDirsToPath !== "") {
                     dirTreeView.suppressDirectoryExpandedOnSelect = true
                 }
                 dirTreeView.refreshView()
-                dirTreeView.suppressDirectoryExpandedOnSelect = false
-                fileListView.refreshView()
+                dirTreeView.suppressDirectoryExpandedOnSelect = wasSuppressingSelection
             }
             else {
                 treeView.refreshView()
@@ -398,17 +418,15 @@ Item {
         else {
             if (root.useSplitView) {
                 dirTreeView.insertDirectoryContent(normalizedPath, cachedEntries)
-                // Prevents unnecessary navigation to intermediate directories.
-                let atTarget = root._expandDirsToPath === "" || normalizedPath === root._expandDirsToPath
-                if (atTarget) {
-                    fileListView.rootPath = normalizedPath
-                }
-                fileListView.refreshView()
             }
             else {
                 treeView.insertDirectoryContent(normalizedPath, cachedEntries)
                 treeView.rootPath = normalizedPath
             }
+        }
+
+        if (root.useSplitView) {
+            root._navigateFileListIfRequested(normalizedPath)
         }
 
         // Handle expansion of the directory tree to the given path if opening directory from deeper level.
@@ -420,7 +438,10 @@ Item {
 
             if (normalizedPath === root._expandDirsToPath) {
                 root._expandDirsToPath = ""
+                // The target response already populated the file list.
+                dirTreeView.suppressDirectoryExpandedOnSelect = true
                 dirTreeView.selectPath(normalizedPath)
+                dirTreeView.suppressDirectoryExpandedOnSelect = false
                 return
             }
 
@@ -467,6 +488,8 @@ Item {
     function clearCache() {
         root._cache = {}
         root._expandedDirs = {}
+        root._expandDirsToPath = ""
+        root._pendingFileListPath = ""
         root.refreshView()
     }
 
@@ -564,6 +587,18 @@ Item {
     /// Called by the parent when a directory listing failed for the given path.
     /// Returns true if the error was handled as a history navigation (caller should not log it).
     function navigationError(path) {
+        let normalizedPath = root._normalizeDirectoryPath(path)
+        if (normalizedPath === root._pendingFileListPath) {
+            root._pendingFileListPath = ""
+        }
+        // Failure at any segment makes the remaining expand-to-path traversal impossible.
+        if (root._expandDirsToPath.startsWith(normalizedPath)) {
+            if (root._pendingFileListPath === root._expandDirsToPath) {
+                root._pendingFileListPath = ""
+            }
+            root._expandDirsToPath = ""
+        }
+
         if (root._pendingHistoryDirection === 0) {
             return false
         }
@@ -603,6 +638,7 @@ Item {
 
     function navigateToDirectory(dirPath) {
         let normalizedPath = root._normalizeDirectoryPath(dirPath)
+        root._pendingFileListPath = normalizedPath
         root._expandDirsToPath = normalizedPath
         let isCached = root._cache[root.directoryTreeRootPath] !== undefined
         root.directoryExpanded(root.directoryTreeRootPath, isCached)

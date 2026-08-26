@@ -3,7 +3,7 @@
 Pure QML tree-style file browser with configurable columns.
 
 - Tree-style directory navigation with expand/collapse.
-- **Split view**: optional directory tree (left) and file list (right); selection in the tree drives the file list.
+- **Split view**: optional directory tree (left) and file list (right); selection in the tree drives the file list. Expanding via the arrow only reveals child directories in the tree — it does not select or open that directory in the file list.
 - Customizable columns with configurable headers and widths.
 - Works with any data source that provides file/directory information.
 - Caching of directory contents for efficient navigation.
@@ -79,7 +79,7 @@ Opens the browser at the given path; expands the tree to that path and loads dir
 
 #### `openDirectory(dirPath, fileEntries)`
 
-Opens and displays a directory. In split view, also refreshes the file list when new content is loaded.
+Opens a directory (caches contents and expands it in the tree). In split view, the file list is updated only when `dirPath` is the selected directory or the target of `openInitialDirectory`/`navigateToDirectory` — not for expand-only via the tree arrow.
 
 - **Parameters:**
   - `dirPath` (string): The directory path to open.
@@ -116,7 +116,7 @@ Clears all cached directory data and resets the view.
 
 #### `directoryExpanded(string path, bool isCached)`
 
-Emitted when a directory is expanded (e.g. by clicking the arrow or selecting the row).
+Emitted when a directory is expanded (e.g. by clicking the arrow or selecting the row). In split view, selecting a row also opens it in the file list; expanding via the arrow only loads children into the tree.
 
 - **path**: The directory path that was expanded.
 - **isCached**: Whether the directory data is already cached.
