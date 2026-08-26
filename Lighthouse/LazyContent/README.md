@@ -5,7 +5,7 @@ Lazy load of Item with optional loading indicator.
 - Defers heavy UI construction until `active` becomes true.
 - Loaded content stays mounted when `active` becomes false.
 - Lifecycle signals for activation, deactivation, and closing.
-- Discarding reparents off-screen and destroys asynchronously.
+- Discarding detaches content from its layout and destroys it asynchronously.
 
 ## Usage
 
@@ -53,14 +53,6 @@ LazyContent {
 #### `setContent(item)`
 
 Eagerly set content. The item is reparented into the shell. Emits `contentLoaded`, and `contentActivated` if `active` is true.
-
-#### `load()`
-
-Create content immediately if `active` is true and content is not yet loaded.
-
-#### `scheduleLoad()`
-
-Schedule deferred content creation after `createDelay`.
 
 #### `discard()`
 

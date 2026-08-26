@@ -32,10 +32,7 @@ Item {
     readonly property Item content: root._content
 
     property Item _content: null
-    property int _loadGeneration: 0
     property bool _discarded: false
-    property bool _loadScheduled: false
-    property var _destroyQueue: []
 
     signal contentLoaded()
     signal contentActivated(Item content)
@@ -46,7 +43,7 @@ Item {
 
     Loader {
         anchors.centerIn: parent
-        active: root.loadingIndicator !== null && !root.loaded && root._loadScheduled
+        active: root.loadingIndicator !== null && !root.loaded && createTimer.running
         sourceComponent: root.loadingIndicator
     }
 
@@ -54,49 +51,18 @@ Item {
         id: createTimer
         interval: root.createDelay
         repeat: false
-        onTriggered: {
-            const generation = root._loadGeneration
-            root._performLoad(generation)
-        }
-    }
-
-    Item {
-        id: destroyGraveyard
-        visible: false
+        onTriggered: root._performLoad()
     }
 
     Timer {
-        id: destroyTimer
+        id: closeTimer
         interval: root.destroyDelay
-        repeat: true
+        repeat: false
         onTriggered: {
-            if (root._destroyQueue.length === 0) {
-                stop()
-                return
+            if (root.content !== null) {
+                root.contentClosing(root.content)
             }
-
-            const entry = root._destroyQueue.shift()
-            if (entry === null || entry === undefined) {
-                return
-            }
-
-            if (entry.phase === "close") {
-                if (entry.content !== null) {
-                    root.contentClosing(entry.content)
-                }
-
-                entry.phase = "destroy"
-                root._destroyQueue.push(entry)
-                return
-            }
-
-            if (entry.shell !== null && entry.shell !== undefined) {
-                entry.shell.destroy()
-            }
-
-            if (destroyGraveyard.parent !== null && destroyGraveyard.children.length === 0) {
-                destroyGraveyard.destroy()
-            }
+            root.destroy(root.destroyDelay)
         }
     }
 
@@ -105,40 +71,24 @@ Item {
         if (root._discarded || item === null || item === undefined) {
             return
         }
-        root.cancelPendingLoad()
+        root._cancelPendingLoad()
         root._content = item
         root._adoptContent(item)
-        root._loadScheduled = false
         if (root.active) {
             root.contentActivated(root._content)
         }
         root.contentLoaded()
     }
 
-    /// Schedule deferred content creation.
-    function scheduleLoad() {
+    function _scheduleLoad() {
         if (root._discarded || root.loaded || root.contentFactory === null) {
             return
         }
-        root._loadScheduled = true
-        root._loadGeneration++
         createTimer.restart()
     }
 
-    /// Create content immediately if active and not yet loaded.
-    function load() {
-        if (root._discarded || root.loaded || root.contentFactory === null || !root.active) {
-            return
-        }
-        root.cancelPendingLoad()
-        const generation = ++root._loadGeneration
-        root._performLoad(generation)
-    }
-
-    function cancelPendingLoad() {
-        root._loadScheduled = false
+    function _cancelPendingLoad() {
         createTimer.stop()
-        root._loadGeneration++
     }
 
     /// Detach from the layout immediately and destroy content asynchronously.
@@ -147,22 +97,13 @@ Item {
             return
         }
         root._discarded = true
-        root.cancelPendingLoad()
+        root._cancelPendingLoad()
         if (root.loaded) {
             root.contentDeactivated(root._content)
         }
         root.visible = false
-        const layoutParent = root.parent
-        if (layoutParent !== null) {
-            destroyGraveyard.parent = layoutParent
-            root.parent = destroyGraveyard
-        }
-        root._destroyQueue.push({
-            "phase": "close",
-            "content": root._content,
-            "shell": root,
-        })
-        destroyTimer.start()
+        root.parent = null
+        closeTimer.start()
     }
 
     function _handleActiveChanged() {
@@ -171,7 +112,7 @@ Item {
         }
         if (root.active) {
             if (!root.loaded && root.contentFactory !== null) {
-                root.scheduleLoad()
+                root._scheduleLoad()
             }
             else if (root.loaded) {
                 root.contentActivated(root._content)
@@ -182,18 +123,19 @@ Item {
         }
     }
 
-    function _performLoad(generation) {
-        if (root._discarded || generation !== root._loadGeneration || !root.active || root.loaded) {
+    function _performLoad() {
+        if (root._discarded || !root.active || root.loaded || root.contentFactory === null) {
             return
         }
         const item = root.contentFactory(root)
-        if (item === null || item === undefined || generation !== root._loadGeneration) {
+        if (item === null || item === undefined || root._discarded || root.loaded) {
             return
         }
         root._content = item
         root._adoptContent(item)
-        root._loadScheduled = false
-        root.contentActivated(root._content)
+        if (root.active) {
+            root.contentActivated(root._content)
+        }
         root.contentLoaded()
     }
 

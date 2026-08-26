@@ -18,39 +18,43 @@ StackLayout {
     property int destroyDelay: 100
     property Component loadingIndicator: null
 
-    property var tabTitles: []
-    property int _contentRevision: 0
+    readonly property var tabTitles: root._tabTitles
+    readonly property Item currentContent: root._currentContent
 
-    readonly property var currentContent: {
-        void root._contentRevision
-        return root.contentAt(root.currentIndex)
-    }
-
+    property var _tabTitles: []
+    property Item _currentContent: null
     property var _tabEntries: []
+    property bool _syncBlocked: false
 
-    signal tabsChanged()
-    signal tabSelected(int index)
     signal contentActivated(Item content)
     signal contentDeactivated(Item content)
     signal contentClosing(Item content)
 
-    onCurrentIndexChanged: root._syncActiveTab()
+    onCurrentIndexChanged: {
+        if (!root._syncBlocked) {
+            root._syncActiveTab()
+        }
+    }
 
     Component {
         id: lazyContentComponent
 
-        LazyContent {}
-    }
+        LazyContent {
+            createDelay: root.createDelay
+            destroyDelay: root.destroyDelay
+            loadingIndicator: root.loadingIndicator
 
-    function activateTab(index) {
-        if (index < 0 || index >= root._tabEntries.length) {
-            return
+            onContentActivated: function(content) {
+                root.contentActivated(content)
+            }
+            onContentDeactivated: function(content) {
+                root.contentDeactivated(content)
+            }
+            onContentClosing: function(content) {
+                root.contentClosing(content)
+            }
+            onContentLoaded: root._updateCurrentContent()
         }
-        if (root.currentIndex !== index) {
-            root.currentIndex = index
-        }
-        root._syncActiveTab()
-        root.tabSelected(index)
     }
 
     function deactivateAll() {
@@ -59,36 +63,34 @@ StackLayout {
         }
     }
 
-    function addTab(title, contentItem, selectTab = true, canClose = true) {
-        const lazyContent = lazyContentComponent.createObject(root, root._lazyContentProperties())
-        root._connectLazyContent(lazyContent)
+    function addTab(title, contentItem, options = {}) {
+        const lazyContent = lazyContentComponent.createObject(root)
         root._tabEntries.push({
             "title": title,
-            "canClose": canClose,
+            "canClose": options.canClose ?? true,
             "lazyContent": lazyContent,
         })
         lazyContent.setContent(contentItem)
-        if (selectTab) {
-            root.activateTab(root._tabEntries.length - 1)
+        root._updateTabTitles()
+        if (options.select ?? true) {
+            root.selectTab(root._tabEntries.length - 1)
         }
-        root._notifyTabsChanged()
         return root._tabEntries.length - 1
     }
 
-    function addLazyTab(title, contentFactory, selectTab = true, canClose = true) {
-        const props = root._lazyContentProperties()
-        props.contentFactory = contentFactory
-        const lazyContent = lazyContentComponent.createObject(root, props)
-        root._connectLazyContent(lazyContent)
+    function addLazyTab(title, contentFactory, options = {}) {
+        const lazyContent = lazyContentComponent.createObject(root, {
+            contentFactory: contentFactory,
+        })
         root._tabEntries.push({
             "title": title,
-            "canClose": canClose,
+            "canClose": options.canClose ?? true,
             "lazyContent": lazyContent,
         })
-        if (selectTab) {
-            root.activateTab(root._tabEntries.length - 1)
+        root._updateTabTitles()
+        if (options.select ?? true) {
+            root.selectTab(root._tabEntries.length - 1)
         }
-        root._notifyTabsChanged()
         return root._tabEntries.length - 1
     }
 
@@ -101,14 +103,29 @@ StackLayout {
             return false
         }
 
-        entry.lazyContent.discard()
+        const oldCurrentIndex = root.currentIndex
+        // Keep the logical entries and StackLayout children consistent while
+        // removing the shell. Reparenting the shell changes currentIndex
+        // synchronously, so defer lifecycle synchronization until both sides
+        // have been updated.
+        root._syncBlocked = true
         root._tabEntries.splice(index, 1)
-        root._notifyTabsChanged()
+        entry.lazyContent.discard()
 
         const tabCount = root._tabEntries.length
+        let targetIndex = -1
         if (tabCount > 0) {
-            root.activateTab(Math.min(index, tabCount - 1))
+            if (index === oldCurrentIndex) {
+                targetIndex = Math.min(index, tabCount - 1)
+            }
+            else {
+                targetIndex = index < oldCurrentIndex ? oldCurrentIndex - 1 : oldCurrentIndex
+            }
         }
+        root.currentIndex = targetIndex
+        root._syncBlocked = false
+        root._syncActiveTab()
+        root._updateTabTitles()
         return true
     }
 
@@ -121,7 +138,6 @@ StackLayout {
     }
 
     function contentAt(index) {
-        void root._contentRevision
         if (index < 0 || index >= root._tabEntries.length) {
             return null
         }
@@ -138,46 +154,25 @@ StackLayout {
     }
 
     function selectTab(index) {
-        root.activateTab(index)
-    }
-
-    function _lazyContentProperties() {
-        return {
-            active: false,
-            createDelay: root.createDelay,
-            destroyDelay: root.destroyDelay,
-            loadingIndicator: root.loadingIndicator,
+        if (index < 0 || index >= root._tabEntries.length) {
+            return
         }
+        root.currentIndex = index
+        root._syncActiveTab()
     }
 
-    function _connectLazyContent(lazyContent) {
-        lazyContent.contentActivated.connect(function(content) {
-            root.contentActivated(content)
-        })
-        lazyContent.contentDeactivated.connect(function(content) {
-            root.contentDeactivated(content)
-        })
-        lazyContent.contentClosing.connect(function(content) {
-            root.contentClosing(content)
-        })
-        lazyContent.contentLoaded.connect(function() {
-            for (const entry of root._tabEntries) {
-                if (entry.lazyContent === lazyContent) {
-                    root._contentRevision++
-                    break
-                }
-            }
-        })
+    function _updateCurrentContent() {
+        root._currentContent = root.contentAt(root.currentIndex)
     }
 
-    function _notifyTabsChanged() {
-        root.tabTitles = root._tabEntries.map(entry => entry.title)
-        root.tabsChanged()
+    function _updateTabTitles() {
+        root._tabTitles = root._tabEntries.map(entry => entry.title)
     }
 
     function _syncActiveTab() {
         for (const [i, entry] of root._tabEntries.entries()) {
             entry.lazyContent.active = (i === root.currentIndex)
         }
+        root._updateCurrentContent()
     }
 }

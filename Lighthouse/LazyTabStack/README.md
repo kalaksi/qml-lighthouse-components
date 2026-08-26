@@ -16,8 +16,8 @@ LazyTabStack {
         content.startUpdates()
     }
 
-    onTabSelected: function(index) {
-        myTabBar.setCurrentIndex(index)
+    onCurrentIndexChanged: {
+        myTabBar.setCurrentIndex(currentIndex)
     }
 
     Component.onCompleted: {
@@ -39,36 +39,32 @@ LazyTabStack {
 | `createDelay` | `int` | `16` | Passed to each tab shell. |
 | `destroyDelay` | `int` | `100` | Passed to each tab shell. |
 | `loadingIndicator` | `Component` | `null` | Passed to each tab shell. Null shows nothing. |
-| `tabTitles` | `var` (array) | `[]` | Title string for each tab. |
+| `tabTitles` | `var` (read-only array) | `[]` | Title string for each tab. |
 | `currentContent` | `var` (read-only) | | Content item of the current tab. Updates when lazy content loads. |
 
 ### Functions
 
-#### `addTab(title, content, selectTab, canClose)`
+#### `addTab(title, content, options)`
 
 Add an eagerly created tab.
 
 - **title**: Tab title shown in an external tab bar.
 - **content**: Content item; reparented into a new shell via `setContent()`.
-- **selectTab** (optional, default `true`): Select the new tab after adding.
-- **canClose** (optional, default `true`): Whether `closeTab()` may remove this tab.
+- **options.select** (optional, default `true`): Select the new tab after adding.
+- **options.canClose** (optional, default `true`): Whether `closeTab()` may remove this tab.
 
 Returns the new tab index.
 
-#### `addLazyTab(title, contentFactory, selectTab, canClose)`
+#### `addLazyTab(title, contentFactory, options)`
 
 Add a lazily created tab.
 
 - **title**: Tab title shown in an external tab bar.
 - **contentFactory**: Must be `function(Item shell): Item`. Passed to the tab shell.
-- **selectTab** (optional, default `true`): Select the new tab after adding.
-- **canClose** (optional, default `true`): Whether `closeTab()` may remove this tab.
+- **options.select** (optional, default `true`): Select the new tab after adding.
+- **options.canClose** (optional, default `true`): Whether `closeTab()` may remove this tab.
 
 Returns the new tab index.
-
-#### `activateTab(index)`
-
-Show the tab at `index` and set its shell active.
 
 #### `deactivateAll()`
 
@@ -96,19 +92,9 @@ Returns the index of the tab containing `item`, or `-1`.
 
 #### `selectTab(index)`
 
-Alias for `activateTab(index)`.
+Show the tab at `index` and set its shell active.
 
 ### Signals
-
-#### `tabsChanged()`
-
-Emitted when tabs are added or removed, or when `tabTitles` changes.
-
-#### `tabSelected(int index)`
-
-Emitted when a tab is selected programmatically via `activateTab()`, `addTab()`, `addLazyTab()`, or `closeTab()`. Use this to keep an external tab bar in sync.
-
-- **index**: Index of the selected tab.
 
 #### `contentActivated(Item content)`
 
