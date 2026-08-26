@@ -175,6 +175,23 @@ Item {
         orientation: Qt.Horizontal
         visible: root.useSplitView
 
+        // Some platform styles expand the handle's hit area far enough into the directory
+        // pane to overlap its vertical scrollbar. Keep a modest grab area biased toward the
+        // file-list side, with only a small portion extending into the directory pane.
+        handle: Rectangle {
+            id: splitHandle
+            implicitWidth: 2
+            implicitHeight: 2
+            color: SplitHandle.pressed ? palette.dark
+                : (SplitHandle.hovered ? palette.midlight : palette.mid)
+
+            containmentMask: Item {
+                x: -2
+                width: 8
+                height: splitHandle.height
+            }
+        }
+
         Item {
             SplitView.preferredWidth: parent.width * 0.25
             SplitView.minimumWidth: 100
