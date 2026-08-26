@@ -145,8 +145,7 @@ Item {
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: ItemDelegate {
                     required property var modelData
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                    width: parent ? parent.width : implicitWidth
                     text: modelData.label
                     font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 }
@@ -163,8 +162,7 @@ Item {
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: ItemDelegate {
                     required property var modelData
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                    width: parent ? parent.width : implicitWidth
                     text: modelData.label
                     font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 }
@@ -181,8 +179,7 @@ Item {
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: ItemDelegate {
                     required property var modelData
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                    width: parent ? parent.width : implicitWidth
                     text: modelData.label
                     font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 }
