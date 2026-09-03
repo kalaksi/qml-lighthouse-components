@@ -40,6 +40,7 @@ Item {
     /// Paths to show with reduced opacity (e.g. rows marked for move).
     property var dimmedPaths: []
     property bool enableShortcuts: false
+    property int tooltipDelay: 800
 
     /// When null, default platform ScrollBar; else used for every tree view (single and split).
     property Component verticalScrollBar: null
@@ -148,6 +149,7 @@ Item {
             _expandedDirs: root._expandedDirs
             _maxColumns: root._maxColumns
             verticalScrollBar: root.verticalScrollBar
+            tooltipDelay: root.tooltipDelay
 
             onDirectoryExpanded: function(path, isCached) {
                 root.directoryExpanded(path, isCached)
@@ -220,6 +222,7 @@ Item {
                 _expandedDirs: root._expandedDirs
                 _maxColumns: root._maxColumns
                 verticalScrollBar: root.verticalScrollBar
+                tooltipDelay: root.tooltipDelay
 
                 columnWidthProvider: function(column, totalWidth) {
                     return column === 0 ? totalWidth : 0
@@ -284,6 +287,7 @@ Item {
                 _cache: root._cache
                 _maxColumns: root._maxColumns
                 verticalScrollBar: root.verticalScrollBar
+                tooltipDelay: root.tooltipDelay
 
                 onDirectoryExpanded: function(path, isCached) {
                     root.directoryExpanded(path, isCached)

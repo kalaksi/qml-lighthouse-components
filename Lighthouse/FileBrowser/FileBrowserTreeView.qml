@@ -35,6 +35,7 @@ Item {
     property string nameFilter: ""
     /// Shows the filter bar at the bottom; clears the filter when hidden.
     property bool showFilterBar: false
+    property int tooltipDelay: 800
 
     property var _cache: ({})
     property var _expandedDirs: ({})
@@ -273,6 +274,7 @@ Item {
                         }
 
                         ToolTip.visible: nameHoverArea.containsMouse && nameLabel.truncated
+                        ToolTip.delay: root.tooltipDelay
                         ToolTip.text: viewDelegate.name
                     }
                 }
@@ -288,6 +290,7 @@ Item {
                     ToolTip.visible: root.hoveredRow === viewDelegate.row
                         && root.hoveredColumn === viewDelegate.column
                         && columnValueLabel.truncated
+                    ToolTip.delay: root.tooltipDelay
                     ToolTip.text: viewDelegate.columnValue
                 }
 
