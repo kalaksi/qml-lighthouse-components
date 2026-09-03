@@ -29,6 +29,7 @@ Item {
     property int optionSpacing: 12
     property real optionOctalOpacity: 0.6
     property bool showOctal: true
+    property bool showSpecialBits: false
     property int tooltipDelay: 800
 
     readonly property bool canAccept: ownerPermissionsComboBox.currentIndex >= 0 &&
@@ -41,6 +42,9 @@ Item {
         root._permissionOptions[groupPermissionsComboBox.currentIndex].value : ""
     readonly property string resultOthersRwx: othersPermissionsComboBox.currentIndex >= 0 ?
         root._permissionOptions[othersPermissionsComboBox.currentIndex].value : ""
+    readonly property bool resultSetuid: setuidCheckBox.checked
+    readonly property bool resultSetgid: setgidCheckBox.checked
+    readonly property bool resultSticky: stickyCheckBox.checked
     readonly property string resultOwner: ownerField.text.trim()
     readonly property string resultGroup: groupField.text.trim()
 
@@ -108,6 +112,12 @@ Item {
                 _indexForTriplet(_tripletAt(root.permissions, start + 3))
             othersPermissionsComboBox.currentIndex =
                 _indexForTriplet(_tripletAt(root.permissions, start + 6))
+            let ownerExecute = root.permissions.charAt(start + 2)
+            let groupExecute = root.permissions.charAt(start + 5)
+            let othersExecute = root.permissions.charAt(start + 8)
+            setuidCheckBox.checked = ownerExecute === "s" || ownerExecute === "S"
+            setgidCheckBox.checked = groupExecute === "s" || groupExecute === "S"
+            stickyCheckBox.checked = othersExecute === "t" || othersExecute === "T"
             ownerField.text = root.owner
             groupField.text = root.group
         }
@@ -115,6 +125,9 @@ Item {
             ownerPermissionsComboBox.currentIndex = -1
             groupPermissionsComboBox.currentIndex = -1
             othersPermissionsComboBox.currentIndex = -1
+            setuidCheckBox.checked = false
+            setgidCheckBox.checked = false
+            stickyCheckBox.checked = false
             ownerField.text = ""
             groupField.text = ""
         }
@@ -251,6 +264,30 @@ Item {
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 delegate: PermissionOptionDelegate {}
                 Layout.minimumWidth: root.comboMinWidth
+            }
+
+            Item {
+                visible: root.showSpecialBits
+            }
+
+            RowLayout {
+                visible: root.showSpecialBits
+                spacing: root.optionSpacing
+
+                CheckBox {
+                    id: setuidCheckBox
+                    text: "Setuid"
+                }
+
+                CheckBox {
+                    id: setgidCheckBox
+                    text: "Setgid"
+                }
+
+                CheckBox {
+                    id: stickyCheckBox
+                    text: "Sticky"
+                }
             }
         }
 

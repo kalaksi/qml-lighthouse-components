@@ -27,9 +27,11 @@ Dialog {
     property alias optionSpacing: permissionsContent.optionSpacing
     property alias optionOctalOpacity: permissionsContent.optionOctalOpacity
     property alias showOctal: permissionsContent.showOctal
+    property alias showSpecialBits: permissionsContent.showSpecialBits
     property alias tooltipDelay: permissionsContent.tooltipDelay
 
-    signal applied(string ownerRwx, string groupRwx, string othersRwx, string newOwner, string newGroup)
+    signal applied(string ownerRwx, string groupRwx, string othersRwx,
+        bool setuid, bool setgid, bool sticky, string newOwner, string newGroup)
 
     title: "Permissions and ownership"
     modal: true
@@ -59,6 +61,9 @@ Dialog {
                 permissionsContent.resultOwnerRwx,
                 permissionsContent.resultGroupRwx,
                 permissionsContent.resultOthersRwx,
+                permissionsContent.resultSetuid,
+                permissionsContent.resultSetgid,
+                permissionsContent.resultSticky,
                 permissionsContent.resultOwner,
                 permissionsContent.resultGroup
             )
