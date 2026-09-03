@@ -32,21 +32,21 @@ Item {
     property bool showSpecialBits: false
     property int tooltipDelay: 800
 
+    property string _initialMode: ""
+
     readonly property bool canAccept: ownerPermissionsComboBox.currentIndex >= 0 &&
         groupPermissionsComboBox.currentIndex >= 0 &&
         othersPermissionsComboBox.currentIndex >= 0
 
-    readonly property string resultOwnerRwx: ownerPermissionsComboBox.currentIndex >= 0 ?
-        root._permissionOptions[ownerPermissionsComboBox.currentIndex].value : ""
-    readonly property string resultGroupRwx: groupPermissionsComboBox.currentIndex >= 0 ?
-        root._permissionOptions[groupPermissionsComboBox.currentIndex].value : ""
-    readonly property string resultOthersRwx: othersPermissionsComboBox.currentIndex >= 0 ?
-        root._permissionOptions[othersPermissionsComboBox.currentIndex].value : ""
-    readonly property bool resultSetuid: setuidCheckBox.checked
-    readonly property bool resultSetgid: setgidCheckBox.checked
-    readonly property bool resultSticky: stickyCheckBox.checked
+    readonly property string resultMode: root.canAccept ? root._modeFromCurrentValues() : ""
     readonly property string resultOwner: ownerField.text.trim()
     readonly property string resultGroup: groupField.text.trim()
+    readonly property string changedOwner:
+        root.resultOwner.length > 0 && root.resultOwner !== root.owner ? root.resultOwner : ""
+    readonly property string changedGroup:
+        root.resultGroup.length > 0 && root.resultGroup !== root.group ? root.resultGroup : ""
+    readonly property bool hasChanges: root.resultMode !== root._initialMode ||
+        root.changedOwner.length > 0 || root.changedGroup.length > 0
 
     readonly property var _permissionOptions: [
         { octal: "0", label: "No access", value: "---" },
@@ -85,6 +85,16 @@ Item {
         return triplet.substring(0, 2) + execute
     }
 
+    function _modeFromCurrentValues() {
+        let specialBits = (setuidCheckBox.checked ? 4 : 0) +
+            (setgidCheckBox.checked ? 2 : 0) +
+            (stickyCheckBox.checked ? 1 : 0)
+        return specialBits.toString() +
+            root._permissionOptions[ownerPermissionsComboBox.currentIndex].octal +
+            root._permissionOptions[groupPermissionsComboBox.currentIndex].octal +
+            root._permissionOptions[othersPermissionsComboBox.currentIndex].octal
+    }
+
     function _updateFromProps() {
         function _tripletAt(str, start) {
             if (start + 2 >= str.length) {
@@ -118,6 +128,7 @@ Item {
             setuidCheckBox.checked = ownerExecute === "s" || ownerExecute === "S"
             setgidCheckBox.checked = groupExecute === "s" || groupExecute === "S"
             stickyCheckBox.checked = othersExecute === "t" || othersExecute === "T"
+            root._initialMode = root._modeFromCurrentValues()
             ownerField.text = root.owner
             groupField.text = root.group
         }
@@ -128,6 +139,7 @@ Item {
             setuidCheckBox.checked = false
             setgidCheckBox.checked = false
             stickyCheckBox.checked = false
+            root._initialMode = ""
             ownerField.text = ""
             groupField.text = ""
         }

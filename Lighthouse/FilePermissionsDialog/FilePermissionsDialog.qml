@@ -30,8 +30,7 @@ Dialog {
     property alias showSpecialBits: permissionsContent.showSpecialBits
     property alias tooltipDelay: permissionsContent.tooltipDelay
 
-    signal applied(string ownerRwx, string groupRwx, string othersRwx,
-        bool setuid, bool setgid, bool sticky, string newOwner, string newGroup)
+    signal applied(string mode, string changedOwner, string changedGroup)
 
     title: "Permissions and ownership"
     modal: true
@@ -56,16 +55,12 @@ Dialog {
     }
 
     onAccepted: {
-        if (permissionsContent.canAccept)
+        if (permissionsContent.canAccept && permissionsContent.hasChanges) {
             root.applied(
-                permissionsContent.resultOwnerRwx,
-                permissionsContent.resultGroupRwx,
-                permissionsContent.resultOthersRwx,
-                permissionsContent.resultSetuid,
-                permissionsContent.resultSetgid,
-                permissionsContent.resultSticky,
-                permissionsContent.resultOwner,
-                permissionsContent.resultGroup
+                permissionsContent.resultMode,
+                permissionsContent.changedOwner,
+                permissionsContent.changedGroup
             )
+        }
     }
 }
