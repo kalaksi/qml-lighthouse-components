@@ -7,6 +7,7 @@ Pure QML tree-style file browser with configurable columns.
 - Customizable columns with configurable headers and widths.
 - Works with any data source that provides file/directory information.
 - Caching of directory contents for efficient navigation.
+- Split-view navigation history (back/forward, including mouse buttons) and an optional file-list filter bar.
 - Pure QML/JavaScript implementation - easy to include with no additional dependencies.
 
 ## Usage
@@ -63,13 +64,23 @@ Item {
 | `arrowWidth` | `int` | `20` | Width of the expand/collapse arrow. |
 | `nameColumnWidth` | `int` | `200` | Width of the name column. |
 | `headerColor` | `color` | `palette.alternateBase` | Background color of the header row. |
+| `headerBorderColor` | `color` | `palette.mid` | Border color of the header row. |
+| `sortColumnIndex` | `int` | `0` | Column currently used for sorting (name column is `0`). |
+| `sortAscending` | `bool` | `true` | Sort direction; clicking the same header toggles this. |
 | `contextMenu` | `Menu` | `null` | Context menu shown on right-click. |
+| `splitHandleGap` | `int` | `4` | Extra space beside the directory tree so the split handle does not overlap its scrollbar. |
 | `hideDirectories` | `bool` | `false` | Hide directories in the file list (split view). |
 | `directoryIconSource` | `string` | `""` | Icon for directory rows; empty uses default. |
 | `dimmedPaths` | `var` (array) | `[]` | Paths shown with reduced opacity. |
+| `enableShortcuts` | `bool` | `false` | When true (split view), Find opens the file-list filter bar and Cancel closes it. |
+| `tooltipDelay` | `int` | `800` | Milliseconds before truncated-name tooltips appear. |
 | `verticalScrollBar` | `Component` | `null` | Optional vertical scrollbar for all tree views (single and split). |
 | `selectedDirectory` | `string` (read-only) | | Currently selected directory path in the tree (split view). |
-| `selectedFiles` | `var` (read-only) | | Currently selected file paths in the file list. |
+| `selectedFiles` | `var` (read-only) | | Currently selected paths in the file list (includes directories). |
+| `selectedFilesOnly` | `var` (read-only) | | `selectedFiles` with directory paths removed. |
+| `hasSingleSelection` | `bool` (read-only) | | True when exactly one row is selected in the active view. |
+| `canNavigateBack` | `bool` (read-only) | | True when split-view history can go back. |
+| `canNavigateForward` | `bool` (read-only) | | True when split-view history can go forward. |
 
 ### Functions
 
@@ -104,6 +115,10 @@ Only directory type is mandatory; other types mainly affect appearance.
 
 Rebuilds the display from cached data. When using the directory tree, the current selection is preserved if that path is still in the tree after the rebuild.
 
+#### `openFilterBar()` / `closeFilterBar()`
+
+Show or hide the file-list name filter (split view). `openFilterBar()` also focuses the filter field.
+
 #### `toggleDirectory(path)`
 
 Programmatically toggle directory expand/collapse state.
@@ -111,6 +126,30 @@ Programmatically toggle directory expand/collapse state.
 #### `clearCache()`
 
 Clears all cached directory data and resets the view.
+
+#### `startRenameForSelected()`
+
+Begin in-place rename of the current selection.
+
+#### `selectFilePath(path)`
+
+Select the given path in the file list (split view) or the single tree.
+
+#### `getCellValue(path, columnIndex)`
+
+Return the displayed value for `path` at `columnIndex`, or `undefined` if the path is not in the current view.
+
+#### `navigateToDirectory(dirPath)`
+
+Navigate to `dirPath` (expands the tree and loads contents as needed). Records history in split view. Mouse back/forward buttons call `navigateBack()` / `navigateForward()`.
+
+#### `navigateBack()` / `navigateForward()`
+
+Move through split-view directory history.
+
+#### `navigationError(path)`
+
+Call from the host when a directory listing failed. Clears pending expand/navigation for that path. Returns `true` if the failure was a history step (the browser retries the previous/next history entry; the host should not treat it as a user-facing error).
 
 ### Signals
 

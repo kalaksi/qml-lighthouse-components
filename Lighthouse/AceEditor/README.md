@@ -48,6 +48,11 @@ AceEditor {
 - **`mode: string`** - Syntax highlighting mode (e.g., "javascript", "python", "text"). Default: "text"
 - **`theme: string`** - Ace editor theme (e.g., "tomorrow_night", "monokai", "github"). Default: ""
 - **`defaultBackgroundColor: color`** - Background color for the WebView. Default: "transparent"
+- **`wordWrap: bool`** - Wrap long lines (`ace` `wrap` option). Default: `true`
+- **`customScrollbarStyling: bool`** - When true, apply CSS scrollbar colors/size below. Default: `false`
+- **`scrollbarTrackColor`**, **`scrollbarThumbColor`**, **`scrollbarThumbHoverColor`**: `color` — used when custom scrollbar styling is on
+- **`scrollbarSize: int`** - Scrollbar thickness in CSS pixels. Default: `10`
+- **`scrollbarRadius: int`** - Scrollbar thumb border radius. Default: `4`
 
 ### Signals
 
