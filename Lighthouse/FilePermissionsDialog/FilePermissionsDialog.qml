@@ -24,6 +24,10 @@ Dialog {
     property alias marginBottom: permissionsContent.marginBottom
     property alias comboMinWidth: permissionsContent.comboMinWidth
     property alias fontSize: permissionsContent.fontSize
+    property alias optionSpacing: permissionsContent.optionSpacing
+    property alias optionOctalOpacity: permissionsContent.optionOctalOpacity
+    property alias showOctal: permissionsContent.showOctal
+    property alias tooltipDelay: permissionsContent.tooltipDelay
 
     signal applied(string ownerRwx, string groupRwx, string othersRwx, string newOwner, string newGroup)
 

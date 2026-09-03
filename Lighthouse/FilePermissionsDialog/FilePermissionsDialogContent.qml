@@ -26,29 +26,33 @@ Item {
     property int marginBottom: 0
     property int comboMinWidth: 180
     property int fontSize: 0
+    property int optionSpacing: 12
+    property real optionOctalOpacity: 0.6
+    property bool showOctal: true
+    property int tooltipDelay: 800
 
-    readonly property bool canAccept: ownerPermCombo.currentIndex >= 0 &&
-        groupPermCombo.currentIndex >= 0 &&
-        othersPermCombo.currentIndex >= 0
+    readonly property bool canAccept: ownerPermissionsComboBox.currentIndex >= 0 &&
+        groupPermissionsComboBox.currentIndex >= 0 &&
+        othersPermissionsComboBox.currentIndex >= 0
 
-    readonly property string resultOwnerRwx: ownerPermCombo.currentIndex >= 0 ?
-        root._permissionOptions[ownerPermCombo.currentIndex].value : ""
-    readonly property string resultGroupRwx: groupPermCombo.currentIndex >= 0 ?
-        root._permissionOptions[groupPermCombo.currentIndex].value : ""
-    readonly property string resultOthersRwx: othersPermCombo.currentIndex >= 0 ?
-        root._permissionOptions[othersPermCombo.currentIndex].value : ""
+    readonly property string resultOwnerRwx: ownerPermissionsComboBox.currentIndex >= 0 ?
+        root._permissionOptions[ownerPermissionsComboBox.currentIndex].value : ""
+    readonly property string resultGroupRwx: groupPermissionsComboBox.currentIndex >= 0 ?
+        root._permissionOptions[groupPermissionsComboBox.currentIndex].value : ""
+    readonly property string resultOthersRwx: othersPermissionsComboBox.currentIndex >= 0 ?
+        root._permissionOptions[othersPermissionsComboBox.currentIndex].value : ""
     readonly property string resultOwner: ownerField.text.trim()
     readonly property string resultGroup: groupField.text.trim()
 
     readonly property var _permissionOptions: [
-        { label: "No access", value: "---" },
-        { label: "Execute only", value: "--x" },
-        { label: "Write only", value: "-w-" },
-        { label: "Write & execute", value: "-wx" },
-        { label: "Read only", value: "r--" },
-        { label: "Read & execute", value: "r-x" },
-        { label: "Read & write", value: "rw-" },
-        { label: "Read, write & execute", value: "rwx" }
+        { octal: "0", label: "No access", value: "---" },
+        { octal: "1", label: "Execute only", value: "--x" },
+        { octal: "2", label: "Write only", value: "-w-" },
+        { octal: "3", label: "Write & execute", value: "-wx" },
+        { octal: "4", label: "Read only", value: "r--" },
+        { octal: "5", label: "Read & execute", value: "r-x" },
+        { octal: "6", label: "Read & write", value: "rw-" },
+        { octal: "7", label: "Read, write & execute", value: "rwx" }
     ]
 
     readonly property bool _showContext: root.contextLabel.length > 0 || root.contextText.length > 0
@@ -98,21 +102,52 @@ Item {
             // `ls -l` modes contain a leading file-type character and can have a
             // trailing ACL/security-context marker (`+` or `.`).
             let start = root.permissions.length >= 10 ? 1 : 0
-            ownerPermCombo.currentIndex =
+            ownerPermissionsComboBox.currentIndex =
                 _indexForTriplet(_tripletAt(root.permissions, start))
-            groupPermCombo.currentIndex =
+            groupPermissionsComboBox.currentIndex =
                 _indexForTriplet(_tripletAt(root.permissions, start + 3))
-            othersPermCombo.currentIndex =
+            othersPermissionsComboBox.currentIndex =
                 _indexForTriplet(_tripletAt(root.permissions, start + 6))
             ownerField.text = root.owner
             groupField.text = root.group
         }
         else {
-            ownerPermCombo.currentIndex = -1
-            groupPermCombo.currentIndex = -1
-            othersPermCombo.currentIndex = -1
+            ownerPermissionsComboBox.currentIndex = -1
+            groupPermissionsComboBox.currentIndex = -1
+            othersPermissionsComboBox.currentIndex = -1
             ownerField.text = ""
             groupField.text = ""
+        }
+    }
+
+    component PermissionOptionDelegate: ItemDelegate {
+        id: optionDelegate
+
+        required property var modelData
+
+        width: parent ? parent.width : implicitWidth
+        text: modelData.label
+        font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
+
+        contentItem: RowLayout {
+            spacing: root.optionSpacing
+
+            Label {
+                visible: root.showOctal
+                text: optionDelegate.modelData.octal
+                opacity: root.optionOctalOpacity
+                font: optionDelegate.font
+                color: optionDelegate.highlighted ?
+                    optionDelegate.palette.highlightedText : optionDelegate.palette.text
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: optionDelegate.modelData.label
+                font: optionDelegate.font
+                color: optionDelegate.highlighted ?
+                    optionDelegate.palette.highlightedText : optionDelegate.palette.text
+            }
         }
     }
 
@@ -121,6 +156,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.leftMargin: root.contentMargin
         anchors.rightMargin: root.contentMargin
         anchors.topMargin: root.marginTop
@@ -139,10 +175,24 @@ Item {
             }
 
             Label {
-                Layout.fillWidth: true
+                id: contextTextLabel
+
+                Layout.preferredWidth: Math.max(permissionsGrid.implicitWidth, ownershipGrid.implicitWidth)
+                Layout.maximumWidth: Layout.preferredWidth
                 text: root.contextText
-                wrapMode: Text.Wrap
+                wrapMode: Text.NoWrap
                 elide: Text.ElideMiddle
+
+                ToolTip.visible: contextHoverArea.containsMouse && contextTextLabel.truncated
+                ToolTip.delay: root.tooltipDelay
+                ToolTip.text: root.contextText
+
+                MouseArea {
+                    id: contextHoverArea
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    hoverEnabled: true
+                }
             }
         }
 
@@ -153,6 +203,7 @@ Item {
         }
 
         GridLayout {
+            id: permissionsGrid
             columns: 2
             rowSpacing: root.rowSpacing
             columnSpacing: root.rowSpacing * 3
@@ -161,16 +212,14 @@ Item {
                 text: "Owner"
             }
             ComboBox {
-                id: ownerPermCombo
+                id: ownerPermissionsComboBox
                 model: root._permissionOptions
                 textRole: "label"
+                displayText: currentIndex >= 0 ?
+                    (root.showOctal ? model[currentIndex].octal + "  " : "") +
+                        model[currentIndex].label : ""
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
-                delegate: ItemDelegate {
-                    required property var modelData
-                    width: parent ? parent.width : implicitWidth
-                    text: modelData.label
-                    font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
-                }
+                delegate: PermissionOptionDelegate {}
                 Layout.minimumWidth: root.comboMinWidth
             }
 
@@ -178,16 +227,14 @@ Item {
                 text: "Group"
             }
             ComboBox {
-                id: groupPermCombo
+                id: groupPermissionsComboBox
                 model: root._permissionOptions
                 textRole: "label"
+                displayText: currentIndex >= 0 ?
+                    (root.showOctal ? model[currentIndex].octal + "  " : "") +
+                        model[currentIndex].label : ""
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
-                delegate: ItemDelegate {
-                    required property var modelData
-                    width: parent ? parent.width : implicitWidth
-                    text: modelData.label
-                    font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
-                }
+                delegate: PermissionOptionDelegate {}
                 Layout.minimumWidth: root.comboMinWidth
             }
 
@@ -195,16 +242,14 @@ Item {
                 text: "Others"
             }
             ComboBox {
-                id: othersPermCombo
+                id: othersPermissionsComboBox
                 model: root._permissionOptions
                 textRole: "label"
+                displayText: currentIndex >= 0 ?
+                    (root.showOctal ? model[currentIndex].octal + "  " : "") +
+                        model[currentIndex].label : ""
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
-                delegate: ItemDelegate {
-                    required property var modelData
-                    width: parent ? parent.width : implicitWidth
-                    text: modelData.label
-                    font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
-                }
+                delegate: PermissionOptionDelegate {}
                 Layout.minimumWidth: root.comboMinWidth
             }
         }
@@ -216,6 +261,7 @@ Item {
         }
 
         GridLayout {
+            id: ownershipGrid
             columns: 2
             rowSpacing: root.rowSpacing
             columnSpacing: root.rowSpacing * 3
@@ -239,9 +285,16 @@ Item {
             }
         }
 
+        Item {
+            visible: root.warningText.length > 0
+            Layout.fillHeight: true
+            Layout.minimumHeight: root.sectionSpacing * 2
+        }
+
         Label {
             visible: root.warningText.length > 0
-            Layout.fillWidth: true
+            Layout.preferredWidth: Math.max(permissionsGrid.implicitWidth, ownershipGrid.implicitWidth)
+            Layout.maximumWidth: Layout.preferredWidth
             text: root.warningText
             color: root.warningTextColor
             wrapMode: Text.Wrap
