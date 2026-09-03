@@ -15,6 +15,8 @@ Dialog {
     property alias permissions: permissionsContent.permissions
     property alias owner: permissionsContent.owner
     property alias group: permissionsContent.group
+    property alias warningText: permissionsContent.warningText
+    property alias warningTextColor: permissionsContent.warningTextColor
     property alias contentMargin: permissionsContent.contentMargin
     property alias sectionSpacing: permissionsContent.sectionSpacing
     property alias rowSpacing: permissionsContent.rowSpacing
@@ -40,7 +42,6 @@ Dialog {
         target: permissionsContent
         function onCanAcceptChanged() {
             root.standardButton(Dialog.Ok).enabled = permissionsContent.canAccept
-            _updateOkButton()
         }
     }
 

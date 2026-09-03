@@ -16,6 +16,8 @@ Item {
     property string permissions: ""
     property string owner: ""
     property string group: ""
+    property string warningText: ""
+    property color warningTextColor: "#555555"
 
     property int contentMargin: 12
     property int sectionSpacing: 16
@@ -59,23 +61,43 @@ Item {
     onGroupChanged: _updateFromProps()
     Component.onCompleted: _updateFromProps()
 
+    function _normalizeTriplet(triplet) {
+        if (triplet.length !== 3) {
+            return "---"
+        }
+
+        let execute = triplet.charAt(2)
+        if (execute === "s" || execute === "t") {
+            execute = "x"
+        }
+        else if (execute === "S" || execute === "T") {
+            execute = "-"
+        }
+
+        return triplet.substring(0, 2) + execute
+    }
+
     function _updateFromProps() {
         function _tripletAt(str, start) {
-            if (start + 2 >= str.length)
+            if (start + 2 >= str.length) {
                 return "---"
-            return str.substring(start, start + 3)
+            }
+            return root._normalizeTriplet(str.substring(start, start + 3))
         }
 
         function _indexForTriplet(triplet) {
             for (let i = 0; i < root._permissionOptions.length; i++) {
-                if (root._permissionOptions[i].value === triplet)
+                if (root._permissionOptions[i].value === triplet) {
                     return i
+                }
             }
             return 0
         }
 
         if (root.permissions.length >= 9) {
-            let start = root.permissions.length === 10 ? 1 : 0
+            // `ls -l` modes contain a leading file-type character and can have a
+            // trailing ACL/security-context marker (`+` or `.`).
+            let start = root.permissions.length >= 10 ? 1 : 0
             ownerPermCombo.currentIndex =
                 _indexForTriplet(_tripletAt(root.permissions, start))
             groupPermCombo.currentIndex =
@@ -215,6 +237,14 @@ Item {
                 font.pointSize: root.fontSize > 0 ? root.fontSize : undefined
                 Layout.minimumWidth: root.comboMinWidth
             }
+        }
+
+        Label {
+            visible: root.warningText.length > 0
+            Layout.fillWidth: true
+            text: root.warningText
+            color: root.warningTextColor
+            wrapMode: Text.Wrap
         }
     }
 }
