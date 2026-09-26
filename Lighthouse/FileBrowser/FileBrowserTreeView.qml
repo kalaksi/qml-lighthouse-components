@@ -39,6 +39,9 @@ Item {
 
     property var _cache: ({})
     property var _expandedDirs: ({})
+    // Performance optimization: mirror of tableModel.rows, since reading tableModel.rows
+    // converts the whole list on every access.
+    property var _rowsMirror: []
     property int _maxColumns: 8
     property int sortColumnIndex: 0
     property bool sortAscending: true
@@ -155,37 +158,13 @@ Item {
 
             opacity: root.dimmedPaths.indexOf(viewDelegate.fullPath) >= 0 ? 0.55 : 1
 
-            property string fullPath: {
-                if (viewDelegate.row >= 0 && viewDelegate.row < tableModel.rowCount && tableModel.rows) {
-                    let rowData = tableModel.rows[viewDelegate.row]
-                    return rowData && rowData.fullPath ? String(rowData.fullPath) : ""
-                }
-                return ""
-            }
-            
-            property string name: {
-                if (viewDelegate.row >= 0 && viewDelegate.row < tableModel.rowCount && tableModel.rows) {
-                    let rowData = tableModel.rows[viewDelegate.row]
-                    return rowData && rowData.name ? String(rowData.name) : ""
-                }
-                return ""
-            }
-            property string fileType: {
-                if (viewDelegate.row >= 0 && viewDelegate.row < tableModel.rowCount && tableModel.rows) {
-                    let rowData = tableModel.rows[viewDelegate.row]
-                    return rowData && rowData.fileType ? String(rowData.fileType) : ""
-                }
-                return ""
-            }
-            property string columnValue: {
-                if (viewDelegate.column <= 0 || viewDelegate.row < 0 || viewDelegate.row >= tableModel.rowCount ||
-                    !tableModel.rows) {
-                    return ""
-                }
-                let rowData = tableModel.rows[viewDelegate.row]
-                let key = "column-" + (viewDelegate.column - 1)
-                return rowData && rowData[key] !== undefined ? String(rowData[key]) : ""
-            }
+            property var rowData: viewDelegate.row >= 0 ? root._rowsMirror[viewDelegate.row] : undefined
+            property string fullPath: viewDelegate.rowData?.fullPath ?? ""
+            property string name: viewDelegate.rowData?.name ?? ""
+            property string fileType: viewDelegate.rowData?.fileType ?? ""
+            property string columnValue: viewDelegate.column > 0
+                ? String(viewDelegate.rowData?.["column-" + (viewDelegate.column - 1)] ?? "")
+                : ""
 
             // To override default background that sometimes leaves a extraneous border after unselecting.
             background: Rectangle {
@@ -517,7 +496,8 @@ Item {
         root._hoveredRows = []
         root.hoveredRow = -1
         root.hoveredColumn = -1
-        tableModel.rows = root._buildFlatList(root.rootPath)
+        root._rowsMirror = root._buildFlatList(root.rootPath)
+        tableModel.rows = root._rowsMirror
 
         if (root.enableDirectoryNavigation && oldSelectedPath !== ""
             && !root.suppressDirectoryExpandedOnSelect) {
@@ -569,15 +549,15 @@ Item {
 
     function getPathAtRow(row) {
         // If row is invalid, intentionally fail hard instead of returning empty string.
-        return tableModel.rows[row].fullPath;
+        return root._rowsMirror[row].fullPath;
     }
 
     function getCellValue(rowIndex, columnIndex) {
-        if (rowIndex < 0 || rowIndex >= tableModel.rowCount || columnIndex < 0 || columnIndex > root._maxColumns) {
+        if (rowIndex < 0 || rowIndex >= root._rowsMirror.length || columnIndex < 0 || columnIndex > root._maxColumns) {
             return undefined
         }
 
-        let row = tableModel.rows[rowIndex]
+        let row = root._rowsMirror[rowIndex]
         return columnIndex === 0 ? row.name : row["column-" + (columnIndex - 1)]
     }
 
@@ -634,6 +614,7 @@ Item {
 
             tableModel.insertRow(rowIndex + i, entry)
         }
+        root._rowsMirror = tableModel.rows
     }
 
     function _sortEntries(entries) {
