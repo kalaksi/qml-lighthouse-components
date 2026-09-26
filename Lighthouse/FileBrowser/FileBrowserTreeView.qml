@@ -612,9 +612,9 @@ Item {
             }
 
             tableModel.insertRow(rowIndex + inserted, entry)
+            root._rowsMirror.splice(rowIndex + inserted, 0, entry)
             inserted++
         }
-        root._rowsMirror = tableModel.rows
     }
 
     function _sortEntries(entries) {
