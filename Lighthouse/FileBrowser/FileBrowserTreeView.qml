@@ -599,9 +599,8 @@ Item {
         }
 
         let sortedEntries = root._sortEntries(fileEntries)
-        for (let i = 0; i < sortedEntries.length; i++) {
-            let entry = sortedEntries[i]
-
+        let inserted = 0
+        for (let entry of sortedEntries) {
             if (root.hideFiles && entry.fileType !== "d") {
                 continue
             }
@@ -612,7 +611,8 @@ Item {
                 continue
             }
 
-            tableModel.insertRow(rowIndex + i, entry)
+            tableModel.insertRow(rowIndex + inserted, entry)
+            inserted++
         }
         root._rowsMirror = tableModel.rows
     }
