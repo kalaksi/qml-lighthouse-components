@@ -524,6 +524,52 @@ Item {
         return undefined
     }
 
+    function setCellValue(path, columnIndex, value) {
+        if (columnIndex < 1) {
+            return false
+        }
+
+        let key = "column-" + (columnIndex - 1)
+        let matched = false
+        for (let dirPath in root._cache) {
+            let entries = root._cache[dirPath]
+            if (!entries) {
+                continue
+            }
+            for (let i = 0; i < entries.length; i++) {
+                if (entries[i].fullPath === path) {
+                    let updated = Object.assign({}, entries[i])
+                    updated[key] = value
+                    entries[i] = updated
+                    matched = true
+                    break
+                }
+            }
+            if (matched) {
+                break
+            }
+        }
+
+        // Update the visible row without rebuilding the model, so selection stays intact.
+        // Reassign _rowsMirror so delegate bindings (which read from it) refresh.
+        let views = root.useSplitView ? [fileListView, dirTreeView] : [treeView]
+        for (let view of views) {
+            for (let row = 0; row < view._rowsMirror.length; row++) {
+                if (view.getPathAtRow(row) === path) {
+                    let updated = Object.assign({}, view._rowsMirror[row])
+                    updated[key] = value
+                    let newMirror = view._rowsMirror.slice()
+                    newMirror[row] = updated
+                    view._rowsMirror = newMirror
+                    view.tableView.model.setRow(row, updated)
+                    matched = true
+                    break
+                }
+            }
+        }
+        return matched
+    }
+
     function buildEntry(directory, name, fileType, columnData) {
         if (columnData.length !== root.columnHeaders.length) {
             console.error("Column data length does not match column headers length")
