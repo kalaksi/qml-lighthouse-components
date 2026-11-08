@@ -161,6 +161,7 @@ Item {
             property var rowData: viewDelegate.row >= 0 ? root._rowsMirror[viewDelegate.row] : undefined
             property string fullPath: viewDelegate.rowData?.fullPath ?? ""
             property string name: viewDelegate.rowData?.name ?? ""
+            property string linkTarget: viewDelegate.rowData?.linkTarget ?? ""
             property string fileType: viewDelegate.rowData?.fileType ?? ""
             property string columnValue: viewDelegate.column > 0
                 ? String(viewDelegate.rowData?.["column-" + (viewDelegate.column - 1)] ?? "")
@@ -240,7 +241,9 @@ Item {
                         width: parent.width - arrowIndentArea.width - parent.spacing
                             - (directoryIconButton.visible ? directoryIconButton.width + parent.spacing : 0)
                         height: parent.height
-                        text: viewDelegate.name
+                        text: viewDelegate.linkTarget
+                            ? (viewDelegate.name + " -> " + viewDelegate.linkTarget)
+                            : viewDelegate.name
                         elide: Text.ElideRight
                         color: viewDelegate.selected ? viewDelegate.palette.highlightedText : viewDelegate.palette.buttonText
                         verticalAlignment: Text.AlignVCenter

@@ -431,6 +431,12 @@ Item {
 
         if (root.useSplitView) {
             root._navigateFileListIfRequested(normalizedPath)
+            // Refresh even when this was not a pending navigation (e.g. refreshCurrentDirectory),
+            // otherwise the file list can keep a stale empty snapshot.
+            if (fileEntries !== undefined && fileEntries !== null
+                && normalizedPath === root._normalizeDirectoryPath(fileListView.rootPath)) {
+                fileListView.refreshView()
+            }
         }
 
         // Handle expansion of the directory tree to the given path if opening directory from deeper level.
