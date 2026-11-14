@@ -631,6 +631,12 @@ Item {
             }
             let aVal = a[key] !== undefined ? String(a[key]) : ""
             let bVal = b[key] !== undefined ? String(b[key]) : ""
+            // Size and similar columns use spaces as thousand separators; compare numerically.
+            let aNum = Number(aVal.replace(/ /g, ""))
+            let bNum = Number(bVal.replace(/ /g, ""))
+            if (aVal !== "" && bVal !== "" && Number.isFinite(aNum) && Number.isFinite(bNum)) {
+                return root.sortAscending ? aNum - bNum : bNum - aNum
+            }
             return root.sortAscending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
         })
     }
